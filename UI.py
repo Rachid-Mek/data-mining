@@ -2,6 +2,7 @@ import streamlit as st
 import Dataset_1_logic as dc
 from Pages import *
 import pandas as pd
+from clustering_pages import *
 
 # ---------------------------------------------------------------------------------------------------------
 st.set_option('deprecation.showPyplotGlobalUse', False)
@@ -98,7 +99,6 @@ def toggle_other_buttons_3(button_name):
         st.session_state["Regles_associations_3"]=0
       
 # ---------------------------------------------------------------------------------------------------------
-
 def general_overview():
     return_welcome =  st.button("Return home" ,use_container_width=True)
 
@@ -106,7 +106,7 @@ def general_overview():
     # Main button to return to the welcome page
     if return_welcome:
         st.session_state.page = "welcome"
-# Page for Dataset Manipulation
+    # Page for Dataset Manipulation
     dataset_choice = st.sidebar.selectbox("Select Dataset", ["Dataset 1", "Dataset 2", "Dataset 3"])
     st.title(f"Dataset Visualisation - {dataset_choice}")
 
@@ -170,7 +170,7 @@ def welcome_page():
     st.subheader("Select your desired Task ")
     
     # Buttons on the welcome page with unique keys
-    if st.button("General Overview", key="general_overview"   ,use_container_width=True):
+    if st.button("General Overview", key="general_overview1" ,use_container_width=True):
         st.session_state.page = "general_overview"
     if st.button("Dataset Manipulation 1", key="dataset_manipulation_1" ,use_container_width=True):
         st.session_state.page = "dataset_manipulation_1"
@@ -178,6 +178,10 @@ def welcome_page():
         st.session_state.page = "dataset_manipulation_2"
     if st.button("Dataset Manipulation 3", key="dataset_manipulation_3" ,use_container_width=True):
         st.session_state.page = "dataset_manipulation_3"
+    if st.button("Supervised Analysis", key="supervised_analysis" ,use_container_width=True):
+        st.session_state.page = "supervised_analysis"
+    if st.button("Unsupervised Analysis", key="unsupervised_analysis" ,use_container_width=True):
+        st.session_state.page = "unsupervised_analysis"
 
 # ------------------------------------------- Main app logic  ----------------------------------------------
 
@@ -195,3 +199,7 @@ elif st.session_state.page == "dataset_manipulation_2":
     dataset_manipulation_dataset2()
 elif st.session_state.page == "dataset_manipulation_3":
     dataset_manipulation_dataset3()
+elif st.session_state.page == "supervised_analysis":
+    supervised_analysis()
+elif st.session_state.page == "unsupervised_analysis":
+    pass

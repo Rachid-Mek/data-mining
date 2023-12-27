@@ -32,7 +32,7 @@ def dataset_manipulation_dataset1():
     description = st.sidebar.button("Data description", key="description1", use_container_width=True ,on_click=ui.toggle_other_buttons ,args=["description"])
     process = st.sidebar.button("Process data", key="process1", use_container_width=True ,on_click=ui.toggle_other_buttons ,args=["process"])   
 
-    if visualisation or st.session_state["visualisation"] == 1  :
+    if visualisation or st.session_state["visualisation"] == 1:
         st.subheader("Data visualisation")
         st.write(dataset)
         selected_task = st.selectbox("Select task", ["Plot Boxplot", "Plot Scatterplot", "Plot Histogram"])
@@ -145,10 +145,7 @@ def dataset_manipulation_dataset2():
     Description = st.sidebar.button("Data Description", key="description2", use_container_width=True,on_click=ui.toggle_other_buttons_2 ,args=["description_2"] )
     Pretraitement = st.sidebar.button("Data pretraitement", key="Pretraitement2", use_container_width=True ,on_click=ui.toggle_other_buttons_2 ,args=["Pretraitement_2"])
     Visualisation = st.sidebar.button("Data Visualisation", key="Visualisation2", use_container_width=True ,on_click=ui.toggle_other_buttons_2 ,args=["Visualisation_2"])   
-
-    st.write("description_2",st.session_state["description_2"])
-    st.write("Visualisation_2",st.session_state["Visualisation_2"])
-    st.write("Pretraitement_2",st.session_state["Pretraitement_2"])
+ 
     
     return_welcome3 =  st.sidebar.button("Return home" ,use_container_width=True)
 
@@ -163,7 +160,7 @@ def dataset_manipulation_dataset2():
         dataset = ui.load_dataset(dataset_choice)
         st.session_state['Dataset actualisé'] = dataset
 
-    if Description or st.session_state["description_2"] == 1  :
+    if Description or st.session_state["description_2"] == 1:
         st.subheader("Data description")
         st.write(dataset)
         st.write(d2.describe_data(dataset))
@@ -294,12 +291,10 @@ def dataset_manipulation_dataset3():
         elif Discretisation_method == "Equal width" and column_to_discretize != "":
                 if "Equal width" not in st.session_state:
                     ui.toggle_button("Equal width")
-                nb_classes = st.slider("Number of classes", 1, 10, 5)
                 st.table(d3.Equal_width_discretize(dataset,column_to_discretize))
         elif column_to_discretize != "": 
                 if "Equal width" not in st.session_state:
                     ui.toggle_button("Equal width")
-                nb_classes = st.slider("Number of classes", 1, 10, 5)
                 if "nb_classes" not in st.session_state:
                     st.session_state['nb_classes'] = nb_classes
                 st.table(d3.Equal_width_discretize(dataset,column_to_discretize))
@@ -329,19 +324,21 @@ def dataset_manipulation_dataset3():
     elif Predictions or st.session_state["Predictions_3"] == 1 :
         st.subheader("Predictions")
         dataset= d3.Apply_discritization(dataset)
-        # dataset["Temperature"] = dataset["Temperature"].astype(float ,errors='ignore')
-        # Temperature = st.selectbox("Temperature" ,d3.Categories(dataset,"Temperature"))
+        dataset["Temperature"] = dataset["Temperature"].astype(float ,errors='ignore')
+      
+        Temperature = st.selectbox("Temperature" , [""] + list(dataset["Temperature"].unique()))
         Soil = st.selectbox("Soil" , [""] + list(dataset["Soil"].unique()))
         Crop = st.selectbox("Crop" , [""]+ list(dataset["Crop"].unique()))
         Fertilizer = st.selectbox("Fertilizer" , [""]+list(dataset["Fertilizer"].unique()))
 
         Predict = st.button("Predict" , use_container_width=True)
         if Predict:
-            prediction_result =d3.Predict(dataset ,Soil ,Crop ,Fertilizer)
-            if prediction_result == "No prediction":
-                st.error("for the given inputs there is no fertilizer to predict")
+            prediction_result =d3.Predict(dataset , Temperature,Soil ,Crop ,Fertilizer)
+            Consequent = "Soil" if Soil == "" else "Crop" if Crop == "" else "Fertilizer" if Fertilizer == "" else ""
+
+            if prediction_result == "No rules found":
+                st.error(f"For the given inputs there is no  {Consequent} to predict")
             else:
                 # select the empty value
-                Consequent = "Soil" if Soil == "" else "Crop" if Crop == "" else "Fertilizer" if Fertilizer == "" else ""
                 st.success(f"For the given inputs the predicted {Consequent} is : " + format(prediction_result[0]))
 # ---------------------------------------------------------------------------------------------------------

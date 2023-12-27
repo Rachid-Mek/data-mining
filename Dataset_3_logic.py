@@ -1,3 +1,4 @@
+from ast import literal_eval
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -6,7 +7,7 @@ from itertools import combinations
 
 # ---------------------------------------------------------------------------------------------------------
 def load_dataset():
-    dataset = pd.read_csv('Dataset3.csv' , delimiter=',', quotechar='"')
+    dataset = pd.read_csv('Data/Dataset3.csv' , delimiter=',', quotechar='"')
     return dataset
 # --------------------------------------------------------------------------------------------------------- 
 def describe_data(data):
@@ -15,6 +16,7 @@ def describe_data(data):
 def column_to_discretize():
     column_to_discretize = ['Temperature', 'Humidity', 'Rainfall']
     return column_to_discretize
+# ---------------------------------------------------------------------------------------------------------
 def Equal_frequency_discretize(dataset , column_name , q=0):
     n= len(dataset[column_name])
     # define the number of quantiles with a formula
@@ -22,13 +24,13 @@ def Equal_frequency_discretize(dataset , column_name , q=0):
         q = math.ceil(1+10/3*math.log10(n))
     dataset.sort_values(by=[column_name], inplace=True)
     dataset.reset_index(drop=True, inplace=True)
-    bin_size = len(dataset) // q
+    bin_size = len(dataset) // q + 1
     discretized_column = [round(i // bin_size )for i in range(len(dataset))]
     dataset[f'{column_name}_E_F'] = discretized_column
     return dataset
 
 # ---------------------------------------------------------------------------------------------------------
-def Equal_width_discretize(dataset , column_name , num_bins=5):
+def Equal_width_discretize(dataset , column_name , num_bins=0):
     import warnings
     warnings.filterwarnings('ignore') # to ignore warnings
 
@@ -147,8 +149,18 @@ def association_rules(dataset ,min_support ):
 
     frequent_itemsets = get_frequent_itemsets(transactions, min_support) 
     association_rules = generate_association_rules(frequent_itemsets)
-    # Convert association rules to a dataframe
-    association_rules_df = pd.DataFrame(association_rules, columns=['Antecedent','consequent', 'support'])
+    # Convert sets to lists
+    association_rules_list = [
+        (list(item[0]), list(item[1]), item[2]) for item in association_rules
+    ]
+
+    # Create DataFrame
+    association_rules_df = pd.DataFrame(association_rules_list, columns=['Antecedent', 'Consequent', 'Support'])
+
+    # Explode the lists to separate rows
+    association_rules_df = association_rules_df.explode('Antecedent').explode('Consequent')
+
+
     return association_rules_df
 # ---------------------------------------------------------------------------------------------------------
 def calculate_confidence(transaction_data, antecedent, consequent):
@@ -208,27 +220,16 @@ def calculate_jaccard(transactions, left, right):
     return jaccard
 # ---------------------------------------------------------------------------------------------------------
 def Apriori(dataset , min_support, min_confidence ):
-    grouped_data = dataset.groupby('Temperature_E_W').agg({
-        'Temperature': list,
-        'Humidity': list,
-        'Rainfall': list,
-        'Soil': list,
-        'Crop': list,
-        'Fertilizer': list
-    }).reset_index()
-    #generer les transactions
-    transactions = []
-    for row in grouped_data.index:
-        transactions.extend(list(zip(*grouped_data.iloc[row, 1:])))
-        
+    # drop Temperature Humidity Rainfall columns
+    dataset = dataset.drop(columns=['Temperature', 'Humidity', 'Rainfall' , 'Temperature_E_W', 'Humidity_E_W', 'Rainfall_E_W'])
+    # Apply discretization
+    dataset['Temperature_E_F'] = dataset['Temperature_E_F'].replace(0,'Low')
+    dataset['Temperature_E_F'] = dataset['Temperature_E_F'].replace(1,'Medium')
+    dataset['Temperature_E_F'] = dataset['Temperature_E_F'].replace(2,'High')
 
-    transactions = [set(transaction) for transaction in transactions]
-    # association_rules_df['antecedent'] = association_rules_df['antecedent'].apply(set)
-    # association_rules_df['consequent'] = association_rules_df['consequent'].apply(set)
-
-    # association_rules_df['confidence'] = association_rules_df.apply(lambda row: calculate_confidence(transactions, row['antecedent'], row['consequent']), axis=1) 
-    # association_rules_df = association_rules_df[association_rules_df['confidence'] >= min_confidence].reset_index(drop=True)
-    
+    print(dataset)
+    transactions = dataset[['Temperature_E_F', 'Soil', 'Crop', 'Fertilizer']].values.tolist()
+   
     frequent_itemsets = get_frequent_itemsets(transactions, min_support) 
     association_rules = generate_association_rules(frequent_itemsets)
     # Convert association rules to a dataframe
@@ -249,33 +250,22 @@ def Apriori(dataset , min_support, min_confidence ):
 def Apply_discritization(dataset):
     column_to_discretize = ['Temperature', 'Humidity', 'Rainfall']
     for column in column_to_discretize:
-        dataset = Equal_frequency_discretize(dataset , column)
+        dataset = Equal_frequency_discretize(dataset , column ,3)
         dataset = Equal_width_discretize(dataset , column)
     return dataset
 # ---------------------------------------------------------------------------------------------------------
-def Categories(dataset ,column): 
-    dataset =Apply_discritization(dataset)
-    grouped_data = dataset.groupby('Temperature_E_W').agg({
-    'Temperature': list,
-    'Humidity': list,
-    'Rainfall': list,
-    'Soil': list,
-    'Crop': list,
-    'Fertilizer': list
-    }).reset_index()
  
-    return grouped_data[column]
-
+    
 def Temperature_class(temp):
-    if temp < 23:
+    if temp < 24.88:
         return 'Low'
-    elif temp < 26:
+    elif temp < 26.77:
         return 'Medium'
     else:
         return 'High'
 
-def Predict(dataset ,Temperature,  Soil , Crop , Fertilizer):
 
+def Predict(dataset ,Temperature,  Soil , Crop , Fertilizer):
     rules = Apriori(dataset , 10 , 0.5)
     Antecedent = []
     Consequent = []
@@ -294,7 +284,7 @@ def Predict(dataset ,Temperature,  Soil , Crop , Fertilizer):
     for i in range(len(rules)):
         print(list(rules['Antecedent'][i]))
         if set(Antecedent) == set(rules['Antecedent'][i]) :
-            Consequent.append(rules['consequent'][i]) 
-
+            Consequent.append(rules['consequent'][i])
+    if len(Consequent) == 0:
+        return 'No rules found'
     return Consequent
-  

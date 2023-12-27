@@ -1,5 +1,3 @@
- 
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,12 +9,12 @@ warnings.filterwarnings('ignore') # to ignore warnings
 
 def import_dataset(choice):
     if choice == 1:
-        dataset = pd.read_csv('Dataset1.csv' , delimiter=',', quotechar='"')
+        dataset = pd.read_csv('Data/Dataset1.csv' , delimiter=',', quotechar='"')
         dataset['P'] = pd.to_numeric(dataset['P'],errors='coerce')
     elif choice == 2:
-        dataset = pd.read_csv('Dataset2.csv' , delimiter=',', quotechar='"')
+        dataset = pd.read_csv('Data/Dataset2.csv' , delimiter=',', quotechar='"')
     elif choice == 3:
-        dataset = pd.read_csv('Dataset3..csv' , delimiter=',', quotechar='"') # Load the data
+        dataset = pd.read_csv('Data/Dataset3.csv' , delimiter=',', quotechar='"') # Load the data
     return dataset 
  
 
@@ -384,4 +382,3 @@ def equal_width_discretize(data , column_name):
 def Apply_equal_width_discretize(dataset , column_name):
     dataset = equal_width_discretize(dataset , column_name)  # Discretize the 'Temperature' column into 10 bins
     return dataset
- 

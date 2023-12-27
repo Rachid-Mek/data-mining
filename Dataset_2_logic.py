@@ -6,7 +6,7 @@ from dateutil.parser import parse
 
 # ---------------------------------------------------------------------------------------------------------
 def load_dataset():
-    dataset = pd.read_csv('Dataset2.csv' , delimiter=',', quotechar='"')
+    dataset = pd.read_csv('Data/Dataset2.csv' , delimiter=',', quotechar='"')
     return dataset
 # ---------------------------------------------------------------------------------------------------------
  
