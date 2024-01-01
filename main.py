@@ -187,6 +187,17 @@ def execute_Rf(n_trees, min_samples_split, max_depth, n_features=None):
 
 
 
+def execute_all(k , min_samples_split, max_depth, n_trees, distance_function='Euclidean', n_features=None):
+    '''this function will return a dataframe containing all the metrics of the 3 algorithms'''
+    fig, conf_mat, df_metrics_knn , knn_classifier = execute_knn(k,distance_function)
+    fig, conf_mat, df_metrics_dt , decision_tree = execute_Dt(min_samples_split, max_depth, n_features)
+    fig, conf_mat, df_metrics_rf , random_forest = execute_Rf(n_trees, min_samples_split, max_depth, n_features)
+
+    # get all the metrics in one dataframe
+    df_metrics = pd.concat([df_metrics_knn, df_metrics_dt, df_metrics_rf], axis=0)
+    df_metrics.index = ['KNN', 'Decision Tree', 'Random Forest']
+    return df_metrics
+
 #-----------------------------------------Main-----------------------------------------#
 
 

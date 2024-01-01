@@ -1,5 +1,5 @@
 import streamlit as st
-from main import execute_knn , execute_Dt, execute_Rf
+from main import execute_knn , execute_Dt, execute_Rf, execute_all
 from Prep_dataset1 import Preprocessing
 
 #----------------------------------Supervised Analysis-------------------------------------#
@@ -8,21 +8,42 @@ def toggle_other_buttons_4(button_name):
         st.session_state["knn"] = 1
         st.session_state["decision_tree"] = 0
         st.session_state["random_forest"]=0 
+        st.session_state["comparaison_algo"]=0
     elif button_name == "decision_tree":
         st.session_state["decision_tree"] = 1
         st.session_state["knn"]=0
         st.session_state["random_forest"]=0
+        st.session_state["comparaison_algo"]=0
     elif button_name == "random_forest":
         st.session_state["random_forest"] = 1
         st.session_state["knn"] =0
         st.session_state["decision_tree"]=0
+        st.session_state["comparaison_algo"]=0
+    elif button_name == "comparaison_algo":
+        st.session_state["comparaison_algo"] = 1
+        st.session_state["knn"] =0
+        st.session_state["decision_tree"]=0
+        st.session_state["random_forest"]=0
 
 
 def dataset_options():
     dataset = Preprocessing()
     options = {}
-    for column in ['N', 'P', 'K', 'pH', 'EC', 'OC', 'S', 'Zn', 'Fe', 'Cu', 'Mn', 'B']:
-        options[column] = st.selectbox(column, [''] + list(dataset[column].unique()), key=column)
+
+    # Create three columns for each row
+    col1, col2, col3 = st.columns(3)
+
+    for i, column in enumerate(['N', 'P', 'K', 'pH', 'EC', 'OC', 'S', 'Zn', 'Fe', 'Cu', 'Mn', 'B']):
+        # Use the appropriate column based on the index
+        if i % 3 == 0:
+            current_col = col1
+        elif i % 3 == 1:
+            current_col = col2
+        else:
+            current_col = col3
+
+        # Add selectbox to the current column
+        options[column] = current_col.selectbox(column, [''] + list(dataset[column].unique()), key=column)
 
     return options
 
@@ -44,17 +65,20 @@ def supervised_analysis():
         st.session_state["decision_tree"] = 0
     if "random_forest" not in st.session_state:
         st.session_state["random_forest"] = 0
+    if "comparaison_algo" not in st.session_state:
+        st.session_state["comparaison_algo"] = 0
 
     k_nearest_neighbors = st.sidebar.button("K-Nearest Neighbors",key="k_nearest_neighbors", use_container_width=True, on_click=toggle_other_buttons_4 , args=["knn"])
     decision_tree = st.sidebar.button("Decision Tree",key="decision tree", use_container_width=True, on_click=toggle_other_buttons_4 , args=["decision_tree"])
     random_forest = st.sidebar.button("Random Forest",key="random forest", use_container_width=True, on_click=toggle_other_buttons_4 , args=["random_forest"])
+    comparaison = st.sidebar.button("Comparaison",key="comparaison", use_container_width=True, on_click=toggle_other_buttons_4 , args=["comparaison_algo"])
     return_home = st.sidebar.button("Return Home",use_container_width=True)
 
     if return_home:
         st.session_state.page = "welcome"
 
     if k_nearest_neighbors or st.session_state["knn"]:
-        st.title(f"Working On - k-Nearest Neighbors")
+        st.subheader(f"Working On - k-Nearest Neighbors")
         # add input text to get the number of k to execute the knn algorithm
         k = st.slider("Select the number of k", 1, 10, 5)
         distance = st.selectbox("Select distance function", ["Euclidean", "Manhattan", "Cosine"])
@@ -84,6 +108,7 @@ def supervised_analysis():
                 st.success(f"The predicted class is : {int(prediction[0])}")
             
     elif decision_tree or st.session_state["decision_tree"]:
+        st.subheader(f"Working On - decision_tree")
         # number of trees
         n_trees = st.slider("Select the number of trees", 5, 15, 10)
         # minimum number of samples to split an internal node
@@ -113,6 +138,7 @@ def supervised_analysis():
                 st.success(f"The predicted class is : {int(prediction[0])}")
 
     elif random_forest or st.session_state["random_forest"]:
+        st.subheader(f"Working On - Random Forest")
         # number of trees
         n_trees = st.slider("Select the number of trees", 5, 15, 10)
         # minimum number of samples to split an internal node
@@ -147,4 +173,23 @@ def supervised_analysis():
                 # get the prediction
                 prediction = rf.predict([list(selected_value.values())])
                 st.success(f"The predicted class is : {int(prediction[0])}")
+
+    elif comparaison or st.session_state["comparaison_algo"]:
+        st.subheader(f"Comparison between algorithms")
+        # number of k
+        k = st.slider("Select the number of k", 1, 20, 5)
+        # distance function
+        distance = st.selectbox("Select distance function", ["Euclidean", "Manhattan", "Cosine"])
+        # number of trees
+        n_trees = st.slider("Select the number of trees", 5, 25, 10)
+        # minimum number of samples to split an internal node
+        min_samples_split = st.slider("Select the minimum number of samples to split an internal node", 1, 20, 5)
+        # maximum depth of the tree
+        max_depth = st.slider("Select the maximum depth of the tree", 5, 20, 10)
+
+        # execute all and getting the metrics as a dataframe
+        metric = execute_all(k , min_samples_split, max_depth, n_trees, distance_function=distance, n_features=None)
+        # display the metrics
+        st.table(metric)
+
 #----------------------------------Unsupervised Analysis-------------------------------------#
