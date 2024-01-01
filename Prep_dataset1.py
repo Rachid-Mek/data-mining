@@ -123,12 +123,55 @@ def normalize_min_max_all_columns(dataset):
         if dataset[col].dtype != 'object':  # Consider only numerical columns
             dataset[col] = normalize_min_max(dataset ,col) # Normalize the column
     return dataset # Return the dataset with normalized columns
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+def handle_outliers_regression(dataset,  max_iterations=80):
+    for iteration in range(max_iterations):
+        if detect_outliers(dataset) == {}:
+            return dataset  # No outliers detected, exit the loop
+ 
+        outliers = detect_outliers(dataset)
+
+        if not outliers:
+            break  # No outliers detected, exit the loop
+
+        for col, col_outliers in outliers.items():
+            # Separate data into features and target
+            features = dataset.drop(index=col_outliers)
+            target = features[col]
+            features = features.drop(columns=[col])
+
+            # Split the data into training and testing sets
+            X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
+
+            # Train a linear regression model
+            model = LinearRegression()
+            model.fit(X_train, y_train)
+
+            # Predict outliers
+            outliers_data = dataset.loc[col_outliers]
+            outliers_features = outliers_data.drop(columns=[col])
+            predictions = model.predict(outliers_features)
+
+            # Replace outliers with predicted values
+            dataset.loc[col_outliers, col] = predictions
+    # if still outliers after max_iterations, replace them with the mean
+    outliers = detect_outliers(dataset)
+    if outliers:
+        for col, col_outliers in outliers.items():
+            dataset.loc[col_outliers, col] = dataset[col].mean()
+    return dataset
+
 def Preprocessing():
     dataset = load_data() # Load the dataset
     dataset = predict_missing_values(dataset) # Replace missing values with the mean
     dataset = normalize_min_max_all_columns(dataset) # Normalize all columns
 
-    dataset = Handle_outliers(dataset) # Handle outliers
-    dataset = Reduction_V(dataset, 0.9) # Drop columns with correlation greater than 0.9
+    # dataset = Handle_outliers(dataset) # Handle outliers
+    dataset = handle_outliers_regression(dataset) # Handle outliers
+    dataset = Reduction_V(dataset, 0.7) # Drop columns with correlation greater than 0.9
     dataset = Reduction_H(dataset) # Drop duplicate rows and columns
     return dataset

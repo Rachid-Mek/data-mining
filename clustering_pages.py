@@ -1,5 +1,5 @@
 import streamlit as st
-from main import execute_knn , execute_Dt, execute_Rf
+from main import execute_knn , execute_Dt, execute_Rf, run_dbscan, run_kmeans
 from Prep_dataset1 import Preprocessing
 
 #----------------------------------Supervised Analysis-------------------------------------#
@@ -148,3 +148,56 @@ def supervised_analysis():
                 prediction = rf.predict([list(selected_value.values())])
                 st.success(f"The predicted class is : {int(prediction[0])}")
 #----------------------------------Unsupervised Analysis-------------------------------------#
+def toggle_other_buttons_5(button_name):
+    if button_name == "kmeans":
+        st.session_state["kmeans"] = 1
+        st.session_state["dbscan"]=0 
+ 
+    elif button_name == "dbscan":
+        st.session_state["dbscan"] = 1
+        st.session_state["kmeans"] =0
+
+def unsupervised_clustering():
+    st.title("Unsupervised clustering Page")
+    st.sidebar.title("Unsupervised   clustering")
+    # Add buttons to perform data manipulation in the sidebar
+    if "kmeans" not in st.session_state:
+        st.session_state["kmeans"] = 0
+    if "dbscan" not in st.session_state:
+        st.session_state["dbscan"] = 0
+
+    kmeans = st.sidebar.button("K-Means",key="k_means", use_container_width=True, on_click=toggle_other_buttons_5 , args=["kmeans"])
+    dbscan = st.sidebar.button("DBSCAN",key="dbscan_", use_container_width=True, on_click=toggle_other_buttons_5 , args=["dbscan"])
+    return_home = st.sidebar.button("Return Home",use_container_width=True)
+
+    if return_home:
+        st.session_state.page = "welcome"
+
+    if kmeans or st.session_state["kmeans"]:
+        st.title(f"Working On - K-Means")
+        k = st.slider("Select the number of k", 2, 30, 1) # add input text to get the number of k to execute the knn algorithm
+        launch_kmeans = st.button("Launch",use_container_width=True)
+        if launch_kmeans:
+            # execute the knn algorithm
+            kmeans ,metrics, chart = run_kmeans(k)
+            st.success("Metrics")
+            st.table(metrics)
+            st.pyplot(chart, use_container_width=True)
+
+                
+    elif dbscan or st.session_state["dbscan"]:
+        st.title(f"Working On - DBSCAN")
+        # number of trees
+        eps = st.slider("Select the eps",0.1, 5.0, 0.1 )
+        # minimum number of samples to split an internal node
+        min_samples = st.slider("Select the minimum number of samples", 1, 30, 1)
+        launch_dbscan = st.button("Launch",use_container_width=True)
+        if launch_dbscan:
+            # execute the Random Forest algorithm
+            dbscan ,metrics,chart = run_dbscan(eps, min_samples)
+            if dbscan == 0 and metrics==0 and chart==0:
+                    st.error("The algorithm could not find any clusters")
+            else:
+                st.success("Metrics")
+                st.table(metrics)
+                st.pyplot(chart, use_container_width=True)

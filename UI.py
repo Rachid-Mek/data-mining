@@ -202,4 +202,4 @@ elif st.session_state.page == "dataset_manipulation_3":
 elif st.session_state.page == "supervised_analysis":
     supervised_analysis()
 elif st.session_state.page == "unsupervised_analysis":
-    pass
+    unsupervised_clustering()

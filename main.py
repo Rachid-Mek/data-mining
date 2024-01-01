@@ -4,6 +4,8 @@ import pandas as pd
 from Prep_dataset1 import Preprocessing
 from Suprevised_Algo import *
 from metrics import *
+from K_means import K_means_
+from DBSCAN import DBSCAN_
 
 def custom_train_test_split(dataset, test_size=0.2, random_state=None):
     '''
@@ -185,38 +187,37 @@ def execute_Rf(n_trees, min_samples_split, max_depth, n_features=None):
 
     return fig, conf_mat, df_metrics , random_forest
 
+# -----------------------------------------Kmeans-----------------------------------------# 
+def run_kmeans(k):
+    dataset = Preprocessing()
+    X = dataset.values
+    kmeans = K_means_(k=k ,max_iter=1000, metric=euclidean_distance)
+    kmeans.fit(X)
+    silhouette_score = kmeans.silhouette_score(X)
+    davies_bouldin_score = kmeans.davies_bouldin_score(X)
+    calinski_harabasz_score = kmeans.calinski_harabasz_score(X)
+    # create a dataframe to display the metrics
+    df_metrics = pd.DataFrame({'Silhouette Score': silhouette_score, 'Davies Bouldin Score': davies_bouldin_score, 'Calinski Harabasz Score': calinski_harabasz_score}, index=[0])
+    plot_clusters = kmeans.plot_clusters(X)
+    return kmeans, df_metrics , plot_clusters
 
+# -----------------------------------------DBSCAN-----------------------------------------#
+def run_dbscan(eps, min_samples):
+    dataset = Preprocessing()
+    dbscan = DBSCAN_(eps=eps, min_samples=min_samples, metric=euclidean_distance)
+    X = dataset.values
 
-#-----------------------------------------Main-----------------------------------------#
+    dbscan.fit(X)
+    if len(set(dbscan.labels)) == 1:
+        return 0, 0, 0
+    else:
+        print("Number of clusters:", len(set(dbscan.labels)))
+        silhouette_score = dbscan.silhouette_score(X)
+        davies_bouldin_score = 0
+        calinski_harabasz_score = dbscan.calinski_harabasz_score(X)
+        # create a dataframe to display the metrics
+        df_metrics = pd.DataFrame({'Silhouette Score': silhouette_score, 'Davies Bouldin Score': davies_bouldin_score, 'Calinski Harabasz Score': calinski_harabasz_score}, index=[0])
+        plot_clusters = dbscan.plot_clusters(X)
+        return dbscan, df_metrics , plot_clusters
 
-
-# # print the results
-# print('KNN')
-# print('Accuracy: ', knn_accuracy)
-# print('Specificity: ', knn_specificity)
-# print('Precision: ', knn_precision)
-# print('Recall: ', knn_recall)
-# print('F1-score: ', knn_f1_score)
-
-# print('--'*30)
-
-# print('Decision Tree')
-# print('Accuracy: ', dt_accuracy)
-# print('Specificity: ', dt_specificity)
-# print('Precision: ', dt_precision)
-# print('Recall: ', dt_recall)
-# print('F1-score: ', dt_f1_score)
-
-# print('--'*30)
-
-# print('Random Forest')
-# print('Accuracy: ', rf_accuracy)
-# print('Specificity: ', rf_specificity)
-# print('Precision: ', rf_precision)
-# print('Recall: ', rf_recall)
-# print('F1-score: ', rf_f1_score)
-
-# print('----------------------Temp Execution----------------------')
-# print('KNN Time: ', Knn_time)
-# print('Decision Tree Time: ', Decision_Tree_time)
-# print('Random Forest Time: ', Random_Forest_time)
+    
