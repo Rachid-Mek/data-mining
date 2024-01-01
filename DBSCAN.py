@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 import numpy as np 
 import pandas as pd
-from sklearn.decomposition import PCA
+from sklearn.metrics import pairwise_distances
 from Metrics_distance import *
 # --------------------------------------------------------------------------------------------------------------
 
@@ -30,9 +30,7 @@ class DBSCAN_:
 
         return self
 
-    # def get_neighbors(self, X, idx):
-    #     distances = np.linalg.norm(X - X[idx], axis=1)
-    #     return np.where(distances <= self.eps)[0]
+ 
     def get_neighbors(self, X, index):
         neighbors = []
         for i in range(X.shape[0]):
@@ -67,7 +65,24 @@ class DBSCAN_:
                 self.labels[current_point] = cluster_label
 
             i += 1
-
+    def plot_clusters(self, X ,labels, demention=2):
+        if demention == 2:
+            plt.scatter(X[:, 0], X[:, 1], c=labels, cmap="plasma")
+            # add centroids
+            plt.xlabel("Feature 0")
+            plt.ylabel("Feature 1")
+            plt.title(f"Cluster Assignments using DBSCAN")
+            return plt
+        elif demention == 3:
+            fig = plt.figure(figsize=(10, 10))
+            ax = fig.add_subplot(111, projection='3d')
+            ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=labels, cmap="plasma")
+            ax.set_xlabel('Feature 0')
+            ax.set_ylabel('Feature 1')
+            ax.set_zlabel('Feature 2')
+            plt.title(f"Cluster Assignments using DBSCAN")
+            return plt
+      
  
      
 #  ------------------------------ EVALUATION METRICS ------------------------------------------------------------------------------------------
@@ -90,52 +105,48 @@ class DBSCAN_:
 
     # ------------------------------------------------------------------------------------------------------------------------
     def davies_bouldin_score(self, X):
-        labels = self.labels
-        n_clusters = len(set(labels) - {-1})  # Exclude noise points
-        cluster_centers = [np.mean(X[labels == i], axis=0) for i in range(n_clusters)]
+        cluster_centers = np.array([np.mean(X[self.labels == i], axis=0) for i in self.clusters()])
 
-        sigma_R = []
-        for i in range(n_clusters):
-            cluster_i_points = X[labels == i]
-            if len(cluster_i_points) == 0:
-                continue  # Skip clusters with no points
-            distances_i = np.linalg.norm(cluster_i_points - cluster_centers[i], axis=1)
-            sigma_R_i = np.mean([np.linalg.norm(cluster_i_points[j] - cluster_centers[i]) for j in range(len(cluster_i_points))])
-            sigma_R.append(sigma_R_i)
+        # Compute pairwise distances between cluster centers
+        cluster_distances = pairwise_distances(cluster_centers)
 
-        R = []
-        for i in range(n_clusters):
-            if len(sigma_R) > 1:  # Check if sigma_R has more than one element
-                R_i = max([(sigma_R[i] + sigma_R[j]) / np.linalg.norm(cluster_centers[i] - cluster_centers[j]) for j in range(n_clusters) if i != j])
-                R.append(R_i)
+        scores = []
 
-        return np.mean(sigma_R / R)  
+        for i in self.clusters():
+            cluster_points_i = X[self.labels == i]
+            cluster_center_i = cluster_points_i.mean(axis=0)
 
+            intra_cluster_distances = [np.linalg.norm(x - cluster_center_i) for x in cluster_points_i]
+            within_cluster_distance = np.mean(intra_cluster_distances)
 
-    def calinski_harabasz_score(self, X):
-        labels = self.labels
-        n_clusters = len(set(labels) - {-1})  # Exclude noise points
-        cluster_centers = [np.mean(X[labels == i], axis=0) for i in range(n_clusters)]
+            # Calculate the similarity index for the current cluster
+            similarity_indices = []
 
-        sigma_T = np.mean([np.mean([np.linalg.norm(X[i] - cluster_centers[j]) for i in range(len(X))]) for j in range(n_clusters)])
+            for j in self.clusters():
+                if j != i:
+                    inter_cluster_distance = np.max(cluster_distances[i, j])
+                    similarity_indices.append((within_cluster_distance + np.mean([np.linalg.norm(x - cluster_centers[j]) for x in X[self.labels == j]])) / inter_cluster_distance)
 
-        sigma_B = np.mean([len(X[labels == i]) * np.linalg.norm(cluster_centers[i] - np.mean(X, axis=0)) for i in range(n_clusters)])
+            # Append the average similarity index for the current cluster
+            scores.append(np.mean(similarity_indices))
 
-        return (sigma_B / sigma_T) * (len(X) - n_clusters) / (n_clusters - 1)
+        # Return the average similarity index over all clusters
+        return np.mean(scores)
 
     
-# ------------------------------------------------------------------------------------------------------------------------ 
-    def plot_clusters(self ,X):
-        # Apply PCA for visualization
-        pca = PCA(n_components=2)
-        reduced_data = pca.fit_transform(X)
-        
-        plt.scatter(reduced_data[:, 0], reduced_data[:, 1], c=self.labels, cmap='viridis', marker='o', s=20)
-        plt.title(f'DBSCAN Clusters (eps={self.eps}, min_samples={self.min_samples})')
-        plt.xlabel('Principal Component 1')
-        plt.ylabel('Principal Component 2')
-        plt.tight_layout()
+    def calinski_harabasz_score(self, X):
+        n_clusters = len(self.clusters())  # Exclude noise points
+        cluster_centers = [np.mean(X[self.labels == i], axis=0) for i in self.clusters()]
 
-        return plt 
-         
- 
+        overall_mean = np.mean(X, axis=0)
+
+        # Calculate the total scatter matrix (sigma_T)
+        sigma_T = np.sum([np.sum((X[i] - overall_mean) ** 2) for i in range(len(X))])
+
+        # Calculate the between-cluster scatter matrix (sigma_B)
+        sigma_B = np.sum([len(X[self.labels == i]) * np.sum((cluster_centers[i] - overall_mean) ** 2) for i in self.clusters()])
+
+        # Calculate the Calinski-Harabasz Index
+        calinski_harabasz_index = (sigma_B / sigma_T) * (len(X) - n_clusters) / (n_clusters - 1)
+
+        return calinski_harabasz_index

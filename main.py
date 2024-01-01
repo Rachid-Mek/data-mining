@@ -4,7 +4,7 @@ import pandas as pd
 from Prep_dataset1 import Preprocessing
 from Suprevised_Algo import *
 from metrics import *
-from K_means import K_means_
+from K_means import K_MEANS
 from DBSCAN import DBSCAN_
 
 def custom_train_test_split(dataset, test_size=0.2, random_state=None):
@@ -186,38 +186,39 @@ def execute_Rf(n_trees, min_samples_split, max_depth, n_features=None):
     df_metrics = pd.DataFrame({'Accuracy': rf_accuracy, 'Specificity': rf_specificity, 'Precision': rf_precision, 'Recall': rf_recall, 'F1_score': rf_f1_score,'Execution time':Random_Forest_time}, index=[0])
 
     return fig, conf_mat, df_metrics , random_forest
-
+     
 # -----------------------------------------Kmeans-----------------------------------------# 
-def run_kmeans(k):
-    dataset = Preprocessing()
+def run_kmeans(k ,dataset):
+    # dataset,_ = Preprocessing(0.7 , Norm=1)
     X = dataset.values
-    kmeans = K_means_(k=k ,max_iter=1000, metric=euclidean_distance)
+    kmeans = K_MEANS(k=k ,max_iter=100, metric=euclidean_distance)
     kmeans.fit(X)
+    labels = kmeans.predict(X)
     silhouette_score = kmeans.silhouette_score(X)
     davies_bouldin_score = kmeans.davies_bouldin_score(X)
     calinski_harabasz_score = kmeans.calinski_harabasz_score(X)
     # create a dataframe to display the metrics
     df_metrics = pd.DataFrame({'Silhouette Score': silhouette_score, 'Davies Bouldin Score': davies_bouldin_score, 'Calinski Harabasz Score': calinski_harabasz_score}, index=[0])
-    plot_clusters = kmeans.plot_clusters(X)
+    plot_clusters = kmeans.plot_clusters(X,labels)
     return kmeans, df_metrics , plot_clusters
 
 # -----------------------------------------DBSCAN-----------------------------------------#
-def run_dbscan(eps, min_samples):
-    dataset = Preprocessing()
-    dbscan = DBSCAN_(eps=eps, min_samples=min_samples, metric=euclidean_distance)
+def run_dbscan(eps, min_samples , dataset):
+    # dataset,dataset_class = Preprocessing(0.7,)
+    dbscan = DBSCAN_(eps=eps, min_samples=min_samples)
     X = dataset.values
 
     dbscan.fit(X)
+    labels = dbscan.labels
     if len(set(dbscan.labels)) == 1:
         return 0, 0, 0
     else:
-        print("Number of clusters:", len(set(dbscan.labels)))
         silhouette_score = dbscan.silhouette_score(X)
         davies_bouldin_score = 0
         calinski_harabasz_score = dbscan.calinski_harabasz_score(X)
-        # create a dataframe to display the metrics
+
         df_metrics = pd.DataFrame({'Silhouette Score': silhouette_score, 'Davies Bouldin Score': davies_bouldin_score, 'Calinski Harabasz Score': calinski_harabasz_score}, index=[0])
-        plot_clusters = dbscan.plot_clusters(X)
+        plot_clusters = dbscan.plot_clusters(X,labels ,demention=2)
         return dbscan, df_metrics , plot_clusters
 
     

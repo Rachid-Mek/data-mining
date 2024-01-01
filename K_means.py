@@ -1,157 +1,158 @@
 from matplotlib import pyplot as plt
 import numpy as np 
 import pandas as pd
-from sklearn.decomposition import PCA 
+from sklearn.decomposition import PCA
+from sklearn.metrics import pairwise_distances 
 from Metrics_distance import *
 
 # --------------------------------------------------------------------------------------------------------------
-class K_means_: # K-means clustering algorithm
-    def __init__(self, k=3, max_iter=100 , metric =euclidean_distance): # initialize the parameters
-        self.k = k # number of clusters
-        self.max_iter = max_iter # maximum number of iterations
-        self.metric = metric # distance metric
-# ------------------------------------------------------------------------------------------------------------------------
-    def fit(self, X): # fit the data
-        self.centroids = {} # initialize the centroids
-        self.centroids = self.calculate_centroids(X) # calculate the centroids
-        # Optimize centroids 
-        for i in range(self.max_iter): # iterate over the maximum number of iterations
-            self.clusters = {} # initialize the clusters
-            for i in range(self.k): # initialize the clusters
-                self.clusters[i] = [] 
-            # Assign data points to the closest centroid
-            for x in X:
-                closest_centroid = self.find_closest_cluster(x)
-                self.clusters[closest_centroid].append(x)
-            # Calculate new centroids from the clusters
-            for cluster in self.clusters:
-                self.centroids[cluster] = np.average(self.clusters[cluster], axis=0)
-        return self.clusters
-# ------------------------------------------------------------------------------------------------------------------------
-    def predict(self, X): # predict the cluster of each point
-        distances = [np.linalg.norm(X - self.centroids[centroid]) for centroid in self.centroids] 
-        closest_centroid = distances.index(min(distances)) 
-        return closest_centroid
-    def predict_all(self, X): # predict the cluster of each point
-        predictions = []
-        for x in X:
-            distances = [np.linalg.norm(x - self.centroids[centroid]) for centroid in self.centroids] 
-            closest_centroid = distances.index(min(distances)) 
-            predictions.append(closest_centroid)
-        return predictions
-    def accuracy(self, y_test, y_pred):
-        return np.sum(y_pred == y_test) / len(y_test)
-    
+class K_MEANS:
+    def __init__(self, k=3, max_iter=100, metric=combined_metric, random_state=None):
+        self.k = k
+        self.max_iter = max_iter
+        self.centroids = None
+        self.metric = metric
+        self.random_state = random_state
+        
 
-# ------------------------------------------------------------------------------------------------------------------------
-    def calculate_centroids(self, X): # initialize the centroids
-        self.centroids = {} # initialize the centroids
-        for i in range(self.k): # initialize the centroids
-            self.centroids[i] = X[np.random.choice(range(len(X)))]
-        return self.centroids
+    def initialize_centroids(self, X):
+        centroids = [X[np.random.choice(len(X))]]
+        for _ in range(1, self.k):
+            distances = np.array([min(self.metric(c, x) for c in centroids) for x in X])
+            probabilities = distances / distances.sum()
+            centroids.append(X[np.random.choice(len(X), p=probabilities)])
+        return np.array(centroids)
     
-    def find_cluster(self, X): # find the cluster of each point
-        self.clusters = {}
-        for i in range(self.k):
-            self.clusters[i] = []
-        for x in X:
-            # distances = [np.linalg.norm(x - self.centroids[centroid]) for centroid in self.centroids] 
-            distances = []
-            for centroid in self.centroids:
-                distances.append(self.metric(x, self.centroids[centroid]))
-            closest_centroid = distances.index(min(distances))
-            self.clusters[closest_centroid].append(x)
-        return self.clusters
+    def fit(self, X):
+        self.centroids = self.initialize_centroids(X)
+        for _ in range(self.max_iter):
+            self.clusters = [[] for _ in range(self.k)]
+            for x in X:
+                distances = [self.metric(x, c) for c in self.centroids]
+                self.clusters[np.argmin(distances)].append(x)
+            for i in range(self.k):
+                if len(self.clusters[i]) != 0:
+                    self.centroids[i] = np.mean(self.clusters[i], axis=0)
+                else:
+                    # Reinitialize centroid for empty cluster
+                    self.centroids[i] = X[np.random.choice(len(X))]
+ 
+        return self 
+  
+ 
     
-    def find_closest_cluster(self, x): # find the closest cluster to a point
-        distances = []
-        for centroid in self.centroids:
-            distances.append(np.linalg.norm(x - self.centroids[centroid]))
-        closest_centroid = distances.index(min(distances))
-        return closest_centroid
+    def predict(self, X):
+        return np.array([np.argmin([self.metric(x, c) for c in self.centroids]) for x in X])
+
+    def inertia(self, X):
+        return sum(np.min([self.metric(x, c) for c in self.centroids]) for x in X)
          
 # ------------------------------------------------------------------------------------------------------------------------
-    # silhouette score is a measure of how similar an object is to its own cluster (cohesion) 
-    # compared to other clusters (separation)
     def silhouette_score(self, X):
-        # Calculate the silhouette score for each sample
-        labels = [self.predict(x) for x in X]
-        # Calculate the silhouette score for the whole dataset
+        labels = self.predict(X)
         return np.mean([self.silhouette_sample(X[i], labels[i]) for i in range(len(X))])
 
     def silhouette_sample(self, x, label):
-        # Calculate the average distance within the same cluster (a)
-        a = np.mean([np.linalg.norm(x - x_) for x_ in self.clusters[label]])
-
-        # Calculate the average distance to the nearest cluster (b)
-        n_clusters = len(self.clusters)
-        b_values = [np.mean([np.linalg.norm(x - x_) for x_ in self.clusters[i]]) for i in range(n_clusters) if i != label]
+        cluster_dict = {i: np.array(self.clusters[i]) for i in range(len(self.clusters))}
+        a = np.mean(np.linalg.norm(x - cluster_dict[label], axis=1))
+        b_values = [np.mean(np.linalg.norm(x - cluster_dict[i], axis=1)) for i in range(len(self.clusters)) if
+                    i != label]
         b = min(b_values) if b_values else 0
-
-        # Calculate the silhouette score
         return (b - a) / max(a, b)
-    def inter_cluster_distance(self, X):
-        # Calculate the average distance between each cluster and all other clusters
-        sigma_R = np.zeros(self.k)
-        for i in range(self.k):
-            cluster_points_i = np.array(self.clusters[i])
-            cluster_center_i = cluster_points_i.mean(axis=0)
-            sigma_R[i] = np.mean([np.linalg.norm(x - cluster_center_i) for x in self.clusters[i]])
-        return np.mean(sigma_R)
-    def intra_cluster_distance(self, X):
-        # Calculate the average distance between each cluster and the next nearest cluster
-        R = np.zeros(self.k)
-        for i in range(self.k):
-            cluster_points_i = np.array(self.clusters[i])
-            cluster_center_i = cluster_points_i.mean(axis=0)
-            R[i] = max([np.mean([np.linalg.norm(x - np.array(self.clusters[j]).mean(axis=0)) for x in self.clusters[i]]) for j in range(self.k) if j != i])
-        return np.mean(R)
+
+    
     def davies_bouldin_score(self, X):
-        # from scratch
-        # Calculate the average distance between each cluster and all other clusters
-        sigma_R = np.zeros(self.k)
-        for i in range(self.k):
-            cluster_points_i = np.array(self.clusters[i])
-            cluster_center_i = cluster_points_i.mean(axis=0)
-            sigma_R[i] = np.mean([np.linalg.norm(x - cluster_center_i) for x in self.clusters[i]])
-        # Calculate the average distance between each cluster and the next nearest cluster
-        R = np.zeros(self.k)
-        for i in range(self.k):
-            cluster_points_i = np.array(self.clusters[i])
-            cluster_center_i = cluster_points_i.mean(axis=0)
-            R[i] = max([np.mean([np.linalg.norm(x - np.array(self.clusters[j]).mean(axis=0)) for x in self.clusters[i]]) for j in range(self.k) if j != i])
-        # Calculate the Davies-Bouldin score
-        return np.mean(sigma_R / R)
-   
-    def inertia(self, X):
-            # Calculate the sum of squared distances of samples to their closest cluster center
-            distances = np.linalg.norm(X - self.centroids[self.predict(X)], axis=1)
-            return np.sum(distances ** 2)
+        cluster_centers = np.array([np.mean(cluster, axis=0) for cluster in self.clusters])
 
+        # Compute pairwise distances between cluster centers
+        cluster_distances = pairwise_distances(cluster_centers)
+
+        scores = []
+
+        for i in range(self.k):
+            cluster_points_i = np.array(self.clusters[i])
+            cluster_center_i = cluster_points_i.mean(axis=0)
+
+            intra_cluster_distances = [np.linalg.norm(x - cluster_center_i) for x in self.clusters[i]]
+            within_cluster_distance = np.mean(intra_cluster_distances)
+
+            # Calculate the similarity index for the current cluster
+            similarity_indices = []
+
+            for j in range(self.k):
+                if j != i:
+                    inter_cluster_distance = np.max(cluster_distances[i, j])
+                    similarity_indices.append((within_cluster_distance + np.mean([np.linalg.norm(x - cluster_centers[j]) for x in self.clusters[j]])) / inter_cluster_distance)
+
+            # Append the average similarity index for the current cluster
+            scores.append(np.mean(similarity_indices))
+
+        # Return the average similarity index over all clusters
+        return np.mean(scores)
+
+ 
+    
     def calinski_harabasz_score(self, X):
-        # Calculate the sum of squared distances of samples to their closest cluster center
-        W = self.inertia(X)
-        # Calculate the sum of squared distances of centroids to their closest cluster center
-        centroids = np.array(list(self.centroids.values()))
-        centroids_mean = centroids.mean(axis=0)
-        centroids_mean = centroids_mean.reshape(1, -1)
-        B = np.sum([np.linalg.norm(centroid - centroids_mean) for centroid in centroids])
-        # Calculate the Calinski-Harabasz score
-        return B / W * (len(X) - self.k) / (self.k - 1)
-# ------------------------------------------------------------------------------------------------------------------------
-    def plot_clusters(self, X):
-        pca = PCA(n_components=2)
-        pca.fit(X)
-        labels =self.predict_all(X)
+        # Calculate the total number of data points
+        total_samples = len(X)
 
-        X_pca = pca.transform(X)
-        plt.figure(figsize=(6, 6))
-        plt.scatter(X_pca[:, 0], X_pca[:, 1], c=labels, cmap='viridis')
-        centers = self.centroids
-        centers_array = np.array(list(centers.values()))
-        centers_pca = pca.transform(centers_array)
-        plt.scatter(centers_pca[:, 0], centers_pca[:, 1], c='black', s=200, alpha=0.5);
-        
-        # plot centers
-        plt.title(f' k={len(self.clusters)} clusters , silhouette_score={self.silhouette_score(X)}')
-        return plt
+        # Calculate the overall mean
+        overall_mean = np.mean(X, axis=0)
+
+        # Calculate the between-cluster variance
+        between_cluster_variance = 0.0
+
+        for i in range(self.k):
+            cluster_size = len(self.clusters[i])
+            cluster_center = np.mean(self.clusters[i], axis=0)
+            between_cluster_variance += cluster_size * np.linalg.norm(cluster_center - overall_mean)**2
+
+        between_cluster_variance /= (self.k - 1)
+
+        # Calculate the within-cluster variance
+        within_cluster_variance = 0.0
+
+        for i in range(self.k):
+            cluster_center = np.mean(self.clusters[i], axis=0)
+            within_cluster_variance += np.sum([np.linalg.norm(x - cluster_center)**2 for x in self.clusters[i]])
+
+        within_cluster_variance /= (total_samples - self.k)
+
+        # Calculate the Calinski-Harabasz Index
+        calinski_harabasz_index = between_cluster_variance / within_cluster_variance
+
+        return calinski_harabasz_index
+    # --------------------------------------------------------------------------------------------------------
+    def plot_clusters(self, X ,labels, demention=2):
+        if demention == 2:
+            pca = PCA(n_components=2)
+            pca.fit(X)
+            X_pca = pca.transform(X)
+
+            plt.figure(figsize=(6, 6))
+            plt.scatter(X_pca[:, 0], X_pca[:, 1], c=labels, cmap='viridis')
+            centroids_pca = pca.transform(self.centroids)
+            plt.scatter(centroids_pca[:, 0], centroids_pca[:, 1], marker='X', s=200, c='red', label='Centroids')
+            plt.xlabel('First Principal Component')#
+            plt.ylabel('Second Principal Component')
+            return plt
+        elif demention == 3:
+            pca_k3 = PCA(n_components=3)
+            pca_k3.fit(X)
+            X_pca_k3 = pca_k3.transform(X)
+
+            # Plot 3D clusters for k=3
+            plt.figure(figsize=(12, 6))
+
+            # 3D plot
+            ax = plt.subplot(1, 2, 2, projection='3d')
+            ax.scatter(X_pca_k3[:, 0], X_pca_k3[:, 1], X_pca_k3[:, 2], c=labels, cmap='viridis')
+            pca = PCA(n_components=3)
+            centroids_pca = pca.fit_transform(self.centroids)
+
+            ax.scatter(centroids_pca[:, 0], centroids_pca[:, 1], centroids_pca[:, 2], marker='X', s=200, c='red', label='Centroids')
+            ax.set_xlabel('First Principal Component')
+            ax.set_ylabel('Second Principal Component')
+            ax.set_zlabel('Third Principal Component')
+            ax.set_title('Clusters for k=3')
+            return plt

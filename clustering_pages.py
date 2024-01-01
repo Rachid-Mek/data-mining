@@ -34,6 +34,12 @@ def cached_execute_knn(k, distance_function):
 def cached_execute_Rf(n_trees, min_samples_split, max_depth, n_features):
     return execute_Rf(n_trees, min_samples_split, max_depth, n_features)
 
+@st.cache_data(show_spinner=False) 
+def load_dataset_unsupervised():
+    st.session_state["dataset_0"],_ = Preprocessing(0.7 , Norm=0)
+    st.session_state["dataset_1"],_ = Preprocessing(0.7 , Norm=1)
+    st.session_state["dataset_2"],_ = Preprocessing(0.7 , Norm=2)
+
 def supervised_analysis():
     st.title("Supervised Analysis Page")
     st.sidebar.title("Supervised Analysis")
@@ -175,11 +181,14 @@ def unsupervised_clustering():
 
     if kmeans or st.session_state["kmeans"]:
         st.title(f"Working On - K-Means")
+        normalization = st.selectbox("Select the type of normalization", ["No normalization", "Min-Max normalization", "Normalizer"])
+        normalization = 0 if normalization == "No normalization" else 1 if normalization == "Min-Max normalization" else 2
+        dataset = st.session_state["dataset_0"] if normalization == 0 else st.session_state["dataset_1"] if normalization == 1 else st.session_state["dataset_2"]
         k = st.slider("Select the number of k", 2, 30, 1) # add input text to get the number of k to execute the knn algorithm
         launch_kmeans = st.button("Launch",use_container_width=True)
         if launch_kmeans:
             # execute the knn algorithm
-            kmeans ,metrics, chart = run_kmeans(k)
+            kmeans ,metrics, chart = run_kmeans(k , dataset)
             st.success("Metrics")
             st.table(metrics)
             st.pyplot(chart, use_container_width=True)
@@ -187,17 +196,20 @@ def unsupervised_clustering():
                 
     elif dbscan or st.session_state["dbscan"]:
         st.title(f"Working On - DBSCAN")
-        # number of trees
+        # choose type of normalization , 0 : no normalization , 1 : min-max normalization , 2 : use Normalizer
+        normalization = st.selectbox("Select the type of normalization", ["No normalization", "Min-Max normalization", "Normalizer"])
+        normalization = 0 if normalization == "No normalization" else 1 if normalization == "Min-Max normalization" else 2
+        dataset = st.session_state["dataset_0"] if normalization == 0 else st.session_state["dataset_1"] if normalization == 1 else st.session_state["dataset_2"]
         eps = st.slider("Select the eps",0.1, 5.0, 0.1 )
         # minimum number of samples to split an internal node
         min_samples = st.slider("Select the minimum number of samples", 1, 30, 1)
         launch_dbscan = st.button("Launch",use_container_width=True)
         if launch_dbscan:
             # execute the Random Forest algorithm
-            dbscan ,metrics,chart = run_dbscan(eps, min_samples)
+            dbscan ,metrics,chart = run_dbscan(eps, min_samples , dataset)
             if dbscan == 0 and metrics==0 and chart==0:
                     st.error("The algorithm could not find any clusters")
             else:
-                st.success("Metrics")
+                st.success("L'algorithme a trouvé des clusters , et voici les métriques :")
                 st.table(metrics)
                 st.pyplot(chart, use_container_width=True)
