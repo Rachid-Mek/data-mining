@@ -5,6 +5,7 @@ from Prep_dataset1 import Preprocessing
 from Suprevised_Algo import *
 from metrics import *
 
+
 def custom_train_test_split(dataset, test_size=0.2, random_state=None):
     '''
     Splits a dataset into training and test sets.
@@ -72,13 +73,13 @@ def execute_knn(k,distance_function='Euclidean'):
     elif distance_function == 'Cosine':
         distance_function = cosine_distance
     
-    knn_start = time.time()
     # Create an instance of the Knn class
     knn_classifier = Knn(k=k, distance_function=distance_function)
 
     # Fit the model on the training set
     knn_classifier.fit(np.array(x_train),np.array(y_train))
 
+    knn_start = time.time()
     # Predict on the test set
     y_pred = knn_classifier.predict(np.array(x_test))
 
@@ -116,13 +117,14 @@ def execute_Dt(min_samples_split, max_depth, n_features):
     y_train = train_set.iloc[:, -1]
     x_test = test_set.iloc[:, :-1]
     y_test = test_set.iloc[:, -1]
-    decision_tree_start = time.time()
+
     # Create an instance of the Decision_Tree class
     decision_tree = DecisionTree(min_samples_split=min_samples_split, max_depth=max_depth, n_features=n_features)
 
     # Fit the model on the training set
     decision_tree.fit(np.array(x_train), np.array(y_train))
 
+    decision_tree_start = time.time()
     # Predict on the test set
     y_pred_dt = decision_tree.predict(np.array(x_test))
     decision_tree_end = time.time()
@@ -158,13 +160,14 @@ def execute_Rf(n_trees, min_samples_split, max_depth, n_features=None):
     y_train = train_set.iloc[:, -1]
     x_test = test_set.iloc[:, :-1]
     y_test = test_set.iloc[:, -1]
-    random_forest_start = time.time()
+    
     # Create an instance of the RandomForest class
     random_forest = RandomForest(n_trees, min_samples_split, max_depth, n_features=n_features)
 
     # Fit the model on the training set
     random_forest.fit(np.array(x_train), np.array(y_train))
 
+    random_forest_start = time.time()
     # Predict on the test set
     y_pred_rf = random_forest.predict(np.array(x_test))
     random_forest_end = time.time()
@@ -186,48 +189,3 @@ def execute_Rf(n_trees, min_samples_split, max_depth, n_features=None):
     return fig, conf_mat, df_metrics , random_forest
 
 
-
-def execute_all(k , min_samples_split, max_depth, n_trees, distance_function='Euclidean', n_features=None):
-    '''this function will return a dataframe containing all the metrics of the 3 algorithms'''
-    fig, conf_mat, df_metrics_knn , knn_classifier = execute_knn(k,distance_function)
-    fig, conf_mat, df_metrics_dt , decision_tree = execute_Dt(min_samples_split, max_depth, n_features)
-    fig, conf_mat, df_metrics_rf , random_forest = execute_Rf(n_trees, min_samples_split, max_depth, n_features)
-
-    # get all the metrics in one dataframe
-    df_metrics = pd.concat([df_metrics_knn, df_metrics_dt, df_metrics_rf], axis=0)
-    df_metrics.index = ['KNN', 'Decision Tree', 'Random Forest']
-    return df_metrics
-
-#-----------------------------------------Main-----------------------------------------#
-
-
-# # print the results
-# print('KNN')
-# print('Accuracy: ', knn_accuracy)
-# print('Specificity: ', knn_specificity)
-# print('Precision: ', knn_precision)
-# print('Recall: ', knn_recall)
-# print('F1-score: ', knn_f1_score)
-
-# print('--'*30)
-
-# print('Decision Tree')
-# print('Accuracy: ', dt_accuracy)
-# print('Specificity: ', dt_specificity)
-# print('Precision: ', dt_precision)
-# print('Recall: ', dt_recall)
-# print('F1-score: ', dt_f1_score)
-
-# print('--'*30)
-
-# print('Random Forest')
-# print('Accuracy: ', rf_accuracy)
-# print('Specificity: ', rf_specificity)
-# print('Precision: ', rf_precision)
-# print('Recall: ', rf_recall)
-# print('F1-score: ', rf_f1_score)
-
-# print('----------------------Temp Execution----------------------')
-# print('KNN Time: ', Knn_time)
-# print('Decision Tree Time: ', Decision_Tree_time)
-# print('Random Forest Time: ', Random_Forest_time)

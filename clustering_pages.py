@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 from main import execute_knn , execute_Dt, execute_Rf, execute_all
 from Prep_dataset1 import Preprocessing
@@ -50,6 +51,10 @@ def dataset_options():
 @st.cache_data(show_spinner=False)
 def cached_execute_knn(k, distance_function):
     return execute_knn(k,distance_function)
+
+@st.cache_data(show_spinner=False)
+def cached_execute_Dt(min_samples_split, max_depth, n_features):
+    return execute_Dt(min_samples_split, max_depth, n_features)
 
 @st.cache_data(show_spinner=False)
 def cached_execute_Rf(n_trees, min_samples_split, max_depth, n_features):
@@ -110,12 +115,12 @@ def supervised_analysis():
     elif decision_tree or st.session_state["decision_tree"]:
         st.subheader(f"Working On - decision_tree")
         # number of trees
-        n_trees = st.slider("Select the number of trees", 5, 15, 10)
+        n_trees = st.slider("Select the number of trees", 5, 20, 10)
         # minimum number of samples to split an internal node
-        min_samples_split = st.slider("Select the minimum number of samples to split an internal node", 1, 10, 5)
+        min_samples_split = st.slider("Select the minimum number of samples to split an internal node", 5, 20, 10)
         # maximum depth of the tree
-        max_depth = st.slider("Select the maximum depth of the tree", 5, 15, 10)        
-        plt, conf_mat, df_metrics, dt = execute_Dt(n_trees, min_samples_split, max_depth)
+        max_depth = st.slider("Select the maximum depth of the tree", 20, 150, 50)        
+        plt, conf_mat, df_metrics, dt = cached_execute_Dt(n_trees, min_samples_split, max_depth)
         display_conf_mat = st.selectbox("Display confusion matrix as", ["Table", "Plot"])
         if display_conf_mat == "Table":
             st.subheader("Confusion Matrix")
@@ -140,13 +145,12 @@ def supervised_analysis():
     elif random_forest or st.session_state["random_forest"]:
         st.subheader(f"Working On - Random Forest")
         # number of trees
-        n_trees = st.slider("Select the number of trees", 5, 15, 10)
+        n_trees = st.slider("Select the number of trees", 5, 20, 10)
         # minimum number of samples to split an internal node
-        min_samples_split = st.slider("Select the minimum number of samples to split an internal node", 1, 10, 5)
+        min_samples_split = st.slider("Select the minimum number of samples to split an internal node", 5, 20, 10)
         # maximum depth of the tree
-        max_depth = st.slider("Select the maximum depth of the tree", 5, 15, 10)
+        max_depth = st.slider("Select the maximum depth of the tree", 20, 150, 50)
 
-        print(n_trees, min_samples_split, max_depth)
         # execute the Random Forest algorithm
         plt, conf_mat, df_metrics , rf = cached_execute_Rf(n_trees, min_samples_split, max_depth, n_features=None)
         display_conf_mat = st.selectbox("Display confusion matrix as", ["Table", "Plot"])
@@ -191,5 +195,17 @@ def supervised_analysis():
         metric = execute_all(k , min_samples_split, max_depth, n_trees, distance_function=distance, n_features=None)
         # display the metrics
         st.table(metric)
+
+
+def execute_all(k , min_samples_split, max_depth, n_trees, distance_function='Euclidean', n_features=None):
+    '''this function will return a dataframe containing all the metrics of the 3 algorithms'''
+    fig, conf_mat, df_metrics_knn , knn_classifier = cached_execute_knn(k,distance_function)
+    fig, conf_mat, df_metrics_dt , decision_tree = execute_Dt(min_samples_split, max_depth, n_features)
+    fig, conf_mat, df_metrics_rf , random_forest = cached_execute_Rf(n_trees, min_samples_split, max_depth, n_features)
+
+    # get all the metrics in one dataframe
+    df_metrics = pd.concat([df_metrics_knn, df_metrics_dt, df_metrics_rf], axis=0)
+    df_metrics.index = ['KNN', 'Decision Tree', 'Random Forest']
+    return df_metrics
 
 #----------------------------------Unsupervised Analysis-------------------------------------#
