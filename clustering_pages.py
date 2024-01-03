@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
-from main import execute_knn , execute_Dt, execute_Rf, execute_all
-from Prep_dataset1 import Preprocessing
+from main import execute_knn , execute_Dt, execute_Rf, run_dbscan, run_kmeans
+from Prep_dataset1 import Preprocessing, Preprocessing_1
 
 #----------------------------------Supervised Analysis-------------------------------------#
 def toggle_other_buttons_4(button_name):
@@ -28,7 +28,7 @@ def toggle_other_buttons_4(button_name):
 
 
 def dataset_options():
-    dataset = Preprocessing()
+    dataset = Preprocessing_1()
     options = {}
 
     # Create three columns for each row
@@ -53,12 +53,19 @@ def cached_execute_knn(k, distance_function):
     return execute_knn(k,distance_function)
 
 @st.cache_data(show_spinner=False)
-def cached_execute_Dt(min_samples_split, max_depth, n_features):
-    return execute_Dt(min_samples_split, max_depth, n_features)
+def cached_execute_Dt(min_samples_split, max_depth):
+    return execute_Dt(min_samples_split, max_depth)
 
 @st.cache_data(show_spinner=False)
 def cached_execute_Rf(n_trees, min_samples_split, max_depth, n_features):
     return execute_Rf(n_trees, min_samples_split, max_depth, n_features)
+
+@st.cache_data(show_spinner=False) 
+def load_dataset_unsupervised():
+    st.session_state["dataset_0"],_ = Preprocessing(0.7 , Norm=0)
+    st.session_state["dataset_1"],_ = Preprocessing(0.7 , Norm=1)
+    st.session_state["dataset_2"],_ = Preprocessing(0.7 , Norm=2)
+
 
 def supervised_analysis():
     st.title("Supervised Analysis Page")
@@ -114,13 +121,11 @@ def supervised_analysis():
             
     elif decision_tree or st.session_state["decision_tree"]:
         st.subheader(f"Working On - decision_tree")
-        # number of trees
-        n_trees = st.slider("Select the number of trees", 5, 20, 10)
         # minimum number of samples to split an internal node
         min_samples_split = st.slider("Select the minimum number of samples to split an internal node", 5, 20, 10)
         # maximum depth of the tree
         max_depth = st.slider("Select the maximum depth of the tree", 20, 150, 50)        
-        plt, conf_mat, df_metrics, dt = cached_execute_Dt(n_trees, min_samples_split, max_depth)
+        plt, conf_mat, df_metrics, dt = cached_execute_Dt(min_samples_split, max_depth)
         display_conf_mat = st.selectbox("Display confusion matrix as", ["Table", "Plot"])
         if display_conf_mat == "Table":
             st.subheader("Confusion Matrix")
@@ -208,4 +213,64 @@ def execute_all(k , min_samples_split, max_depth, n_trees, distance_function='Eu
     df_metrics.index = ['KNN', 'Decision Tree', 'Random Forest']
     return df_metrics
 
+
 #----------------------------------Unsupervised Analysis-------------------------------------#
+def toggle_other_buttons_5(button_name):
+    if button_name == "kmeans":
+        st.session_state["kmeans"] = 1
+        st.session_state["dbscan"]=0 
+ 
+    elif button_name == "dbscan":
+        st.session_state["dbscan"] = 1
+        st.session_state["kmeans"] =0
+
+def unsupervised_clustering():
+    st.title("Unsupervised clustering Page")
+    st.sidebar.title("Unsupervised   clustering")
+    # Add buttons to perform data manipulation in the sidebar
+    if "kmeans" not in st.session_state:
+        st.session_state["kmeans"] = 0
+    if "dbscan" not in st.session_state:
+        st.session_state["dbscan"] = 0
+
+    kmeans = st.sidebar.button("K-Means",key="k_means", use_container_width=True, on_click=toggle_other_buttons_5 , args=["kmeans"])
+    dbscan = st.sidebar.button("DBSCAN",key="dbscan_", use_container_width=True, on_click=toggle_other_buttons_5 , args=["dbscan"])
+    return_home = st.sidebar.button("Return Home",use_container_width=True)
+
+    if return_home:
+        st.session_state.page = "welcome"
+
+    if kmeans or st.session_state["kmeans"]:
+        st.title(f"Working On - K-Means")
+        normalization = st.selectbox("Select the type of normalization", ["No normalization", "Min-Max normalization", "Normalizer"])
+        normalization = 0 if normalization == "No normalization" else 1 if normalization == "Min-Max normalization" else 2
+        dataset = st.session_state["dataset_0"] if normalization == 0 else st.session_state["dataset_1"] if normalization == 1 else st.session_state["dataset_2"]
+        k = st.slider("Select the number of k", 2, 30, 1) # add input text to get the number of k to execute the knn algorithm
+        launch_kmeans = st.button("Launch",use_container_width=True)
+        if launch_kmeans:
+            # execute the knn algorithm
+            kmeans ,metrics, chart = run_kmeans(k , dataset)
+            st.success("Metrics")
+            st.table(metrics)
+            st.pyplot(chart, use_container_width=True)
+
+                
+    elif dbscan or st.session_state["dbscan"]:
+        st.title(f"Working On - DBSCAN")
+        # choose type of normalization , 0 : no normalization , 1 : min-max normalization , 2 : use Normalizer
+        normalization = st.selectbox("Select the type of normalization", ["No normalization", "Min-Max normalization", "Normalizer"])
+        normalization = 0 if normalization == "No normalization" else 1 if normalization == "Min-Max normalization" else 2
+        dataset = st.session_state["dataset_0"] if normalization == 0 else st.session_state["dataset_1"] if normalization == 1 else st.session_state["dataset_2"]
+        eps = st.slider("Select the eps",0.1, 5.0, 0.1 )
+        # minimum number of samples to split an internal node
+        min_samples = st.slider("Select the minimum number of samples", 1, 30, 1)
+        launch_dbscan = st.button("Launch",use_container_width=True)
+        if launch_dbscan:
+            # execute the Random Forest algorithm
+            dbscan ,metrics,chart = run_dbscan(eps, min_samples , dataset)
+            if dbscan == 0 and metrics==0 and chart==0:
+                    st.error("The algorithm could not find any clusters")
+            else:
+                st.success("L'algorithme a trouvé des clusters , et voici les métriques :")
+                st.table(metrics)
+                st.pyplot(chart, use_container_width=True)

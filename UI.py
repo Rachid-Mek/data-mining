@@ -170,7 +170,7 @@ def welcome_page():
     st.subheader("Select your desired Task ")
     
     # Buttons on the welcome page with unique keys
-    if st.button("General Overview", key="general_overview1" ,use_container_width=True):
+    if st.button("General Overview", key="general_overview2" ,use_container_width=True):
         st.session_state.page = "general_overview"
     if st.button("Dataset Manipulation 1", key="dataset_manipulation_1" ,use_container_width=True):
         st.session_state.page = "dataset_manipulation_1"
@@ -202,4 +202,7 @@ elif st.session_state.page == "dataset_manipulation_3":
 elif st.session_state.page == "supervised_analysis":
     supervised_analysis()
 elif st.session_state.page == "unsupervised_analysis":
-    pass
+    if "dataset_unsupervised" not in st.session_state:
+        st.session_state['dataset_unsupervised'] = 1
+        load_dataset_unsupervised()
+    unsupervised_clustering()
