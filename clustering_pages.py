@@ -89,10 +89,11 @@ def supervised_analysis():
     if return_home:
         st.session_state.page = "welcome"
 
+#--------------------------------------------KNN PAGE -----------------------------------------------#
     if k_nearest_neighbors or st.session_state["knn"]:
         st.subheader(f"Working On - k-Nearest Neighbors")
         # add input text to get the number of k to execute the knn algorithm
-        k = st.slider("Select the number of k", 1, 10, 5)
+        k = st.slider("Select the number of k", 1, 30, 9)
         distance = st.selectbox("Select distance function", ["Euclidean", "Manhattan", "Cosine"])
         # execute the knn algorithm
         plt, conf_mat, df_metrics, knn_classifier = cached_execute_knn(k, distance_function=distance)
@@ -122,7 +123,7 @@ def supervised_analysis():
     elif decision_tree or st.session_state["decision_tree"]:
         st.subheader(f"Working On - decision_tree")
         # minimum number of samples to split an internal node
-        min_samples_split = st.slider("Select the minimum number of samples to split an internal node", 5, 20, 10)
+        min_samples_split = st.slider("Select the minimum number of samples to split an internal node", 2, 20, 10)
         # maximum depth of the tree
         max_depth = st.slider("Select the maximum depth of the tree", 20, 150, 50)        
         plt, conf_mat, df_metrics, dt = cached_execute_Dt(min_samples_split, max_depth)
@@ -152,7 +153,7 @@ def supervised_analysis():
         # number of trees
         n_trees = st.slider("Select the number of trees", 5, 20, 10)
         # minimum number of samples to split an internal node
-        min_samples_split = st.slider("Select the minimum number of samples to split an internal node", 5, 20, 10)
+        min_samples_split = st.slider("Select the minimum number of samples to split an internal node", 2, 20, 10)
         # maximum depth of the tree
         max_depth = st.slider("Select the maximum depth of the tree", 20, 150, 50)
 

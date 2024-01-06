@@ -59,8 +59,6 @@ def cosine_distance(x1, x2):
 #-----------------------------------------KNN-----------------------------------------#
 def execute_knn(k,distance_function='Euclidean'):
     dataset = Preprocessing_1()
-    print('here is the dataset :')
-    print(dataset)
     train_set , test_set = custom_train_test_split(dataset.values, test_size=0.2, random_state=0)
     train_set = pd.DataFrame(train_set, columns=dataset.columns)
     test_set = pd.DataFrame(test_set, columns=dataset.columns)
