@@ -224,7 +224,7 @@ def welcome_page():
             if st.button("Unsupervised Analysis", key="unsupervised_analysis" ,use_container_width=True):
                 st.session_state.page = "unsupervised_analysis"
         except:
-            st.warning('relod the page with F5 or CTRL + R')
+            st.warning('reload the page with F5 or CTRL + R')
     
 # ------------------------------------------- Main app logic  ----------------------------------------------
 
