@@ -69,7 +69,7 @@ def SPECIFICITE(conf_mat):
     """
 
     # Spécificité pour chaque classe
-    spec = np.diag(conf_mat) / np.sum(conf_mat, axis=0)
+    spec = np.diag(conf_mat) / np.sum(conf_mat, axis=1)
 
     # Spécificité totale
     return np.nanmean(spec)

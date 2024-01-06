@@ -170,8 +170,8 @@ def normalize_min_max (dataset ,collumn) :
     new_max = 1  # Define a new maximum value
     dataset[collumn] = (dataset[collumn] - min_value) / (max_value - min_value) * (new_max - new_min) + new_min # Apply the formula to each element of the column
     return dataset[collumn]  # Return the column with normalized values
-def normalize_min_max_all_columns(dataset ): 
-    for col in dataset.columns:
+def normalize_min_max_all_columns(dataset): 
+    for col in dataset.columns[:-1]:
             dataset[col] = normalize_min_max(dataset ,col) # Normalize the column
     return dataset # Return the dataset with normalized columns
  
@@ -201,7 +201,7 @@ def Preprocessing(corr=0.8 ,Norm=1):
     # ------------------------- OUTLIERS ------------------------------------------
     # dataset = Handle_outliers(dataset , treatment_method='median') # Handle outliers  
     if Norm == 1 :
-        dataset = normalize_min_max_all_columns(dataset) # Normalize all columns  
+        dataset = normalize_min_max_all_columns(dataset)  
     elif Norm==2 :
         dataset = Normalizer(dataset)
  
@@ -213,7 +213,14 @@ def Preprocessing(corr=0.8 ,Norm=1):
     # dataset = reduction_variance(dataset ,var) #  Drop columns with variance less than var
     return dataset , dataset_before # Return the cleaned dataset and the dataset before  reducing the number of columns
  
+def Preprocessing_1():
+    dataset = load_data() # Load the dataset
+    dataset = predict_missing_values(dataset) # Replace missing values with the mean
+    #normalize data withoutout the last column
+    dataset = normalize_min_max_all_columns(dataset)
+
+    dataset = Handle_outliers(dataset) # Handle outliers
+    dataset = Reduction_V(dataset, 0.9) # Drop columns with correlation greater than 0.9
+    dataset = Reduction_H(dataset) # Drop duplicate rows and columns
+    return dataset
 # ----------------------------------------------------------------------------------------------------------------
-
-
-  

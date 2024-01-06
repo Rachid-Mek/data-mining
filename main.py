@@ -1,11 +1,12 @@
 import time
 import numpy as np
 import pandas as pd
-from Prep_dataset1 import Preprocessing
+from Prep_dataset1 import Preprocessing_1
 from Suprevised_Algo import *
 from metrics import *
 from K_means import K_MEANS
 from DBSCAN import DBSCAN_
+
 
 def custom_train_test_split(dataset, test_size=0.2, random_state=None):
     '''
@@ -57,7 +58,7 @@ def cosine_distance(x1, x2):
     return distance
 #-----------------------------------------KNN-----------------------------------------#
 def execute_knn(k,distance_function='Euclidean'):
-    dataset = Preprocessing()
+    dataset = Preprocessing_1()
     train_set , test_set = custom_train_test_split(dataset.values, test_size=0.2, random_state=0)
     train_set = pd.DataFrame(train_set, columns=dataset.columns)
     test_set = pd.DataFrame(test_set, columns=dataset.columns)
@@ -74,13 +75,13 @@ def execute_knn(k,distance_function='Euclidean'):
     elif distance_function == 'Cosine':
         distance_function = cosine_distance
     
-    knn_start = time.time()
     # Create an instance of the Knn class
     knn_classifier = Knn(k=k, distance_function=distance_function)
 
     # Fit the model on the training set
     knn_classifier.fit(np.array(x_train),np.array(y_train))
 
+    knn_start = time.time()
     # Predict on the test set
     y_pred = knn_classifier.predict(np.array(x_test))
 
@@ -106,8 +107,8 @@ def execute_knn(k,distance_function='Euclidean'):
     return fig, conf_mat, df_metrics , knn_classifier
 
 #-----------------------------------------Decision_tree-----------------------------------------#
-def execute_Dt(min_samples_split, max_depth, n_features):
-    dataset = Preprocessing()
+def execute_Dt(min_samples_split, max_depth, n_features = None):
+    dataset= Preprocessing_1()
     train_set , test_set = custom_train_test_split(dataset.values, test_size=0.2, random_state=0)
 
     train_set = pd.DataFrame(train_set, columns=dataset.columns)
@@ -118,13 +119,14 @@ def execute_Dt(min_samples_split, max_depth, n_features):
     y_train = train_set.iloc[:, -1]
     x_test = test_set.iloc[:, :-1]
     y_test = test_set.iloc[:, -1]
-    decision_tree_start = time.time()
+
     # Create an instance of the Decision_Tree class
     decision_tree = DecisionTree(min_samples_split=min_samples_split, max_depth=max_depth, n_features=n_features)
 
     # Fit the model on the training set
     decision_tree.fit(np.array(x_train), np.array(y_train))
 
+    decision_tree_start = time.time()
     # Predict on the test set
     y_pred_dt = decision_tree.predict(np.array(x_test))
     decision_tree_end = time.time()
@@ -149,7 +151,7 @@ def execute_Dt(min_samples_split, max_depth, n_features):
 
 #-----------------------------------------Random_forest-----------------------------------------#
 def execute_Rf(n_trees, min_samples_split, max_depth, n_features=None):
-    dataset = Preprocessing()
+    dataset = Preprocessing_1()
     train_set , test_set = custom_train_test_split(dataset.values, test_size=0.2, random_state=0)
 
     train_set = pd.DataFrame(train_set, columns=dataset.columns)
@@ -160,13 +162,14 @@ def execute_Rf(n_trees, min_samples_split, max_depth, n_features=None):
     y_train = train_set.iloc[:, -1]
     x_test = test_set.iloc[:, :-1]
     y_test = test_set.iloc[:, -1]
-    random_forest_start = time.time()
+    
     # Create an instance of the RandomForest class
     random_forest = RandomForest(n_trees, min_samples_split, max_depth, n_features=n_features)
 
     # Fit the model on the training set
     random_forest.fit(np.array(x_train), np.array(y_train))
 
+    random_forest_start = time.time()
     # Predict on the test set
     y_pred_rf = random_forest.predict(np.array(x_test))
     random_forest_end = time.time()
@@ -222,5 +225,3 @@ def run_dbscan(eps, min_samples , dataset):
                                     'Calinski Harabasz Score': calinski_harabasz_score}, index=[0])
         plot_clusters = dbscan.plot_clusters(X,labels ,demention=2)
         return dbscan, df_metrics , plot_clusters
-
-    
