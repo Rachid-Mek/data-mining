@@ -1,3 +1,4 @@
+from time import sleep
 import streamlit as st
 import Dataset_1_logic as dc
 from Pages import *
@@ -202,32 +203,33 @@ def general_overview():
 
 # Welcome Page
 def welcome_page():
-    st.title("Welcome to Dataset Manipulation Interface")
-    st.subheader("Select your desired Task ")
-
-    set_png_as_page_bg('background.jpg')
     
-    # Buttons on the welcome page with unique keys
-    if st.button("General Overview",key="WelcomeGeneral" , use_container_width=True):
-        st.session_state.page = "general_overview"
-    if st.button("Dataset Manipulation 1", key="dataset_manipulation_1" ,use_container_width=True):
-        st.session_state.page = "dataset_manipulation_1"
-    if st.button("Dataset Manipulation 2", key="dataset_manipulation_2" ,use_container_width=True):
-        st.session_state.page = "dataset_manipulation_2"
-    if st.button("Dataset Manipulation 3", key="dataset_manipulation_3" ,use_container_width=True):
-        st.session_state.page = "dataset_manipulation_3"
-    if st.button("Supervised Analysis", key="supervised_analysis" ,use_container_width=True):
-        st.session_state.page = "supervised_analysis"
-    if st.button("Unsupervised Analysis", key="unsupervised_analysis" ,use_container_width=True):
-        st.session_state.page = "unsupervised_analysis"
+        st.title("Welcome to Dataset Manipulation Interface")
+        st.subheader("Select your desired Task ")
 
+        set_png_as_page_bg('background.jpg')
+        
+        # Buttons on the welcome page with unique keys
+        try:
+            if st.button("General Overview",key="WelcomeGeneral" , use_container_width=True):
+                st.session_state.page = "general_overview"
+            if st.button("Dataset Manipulation 1", key="dataset_manipulation_1" ,use_container_width=True):
+                st.session_state.page = "dataset_manipulation_1"
+            if st.button("Dataset Manipulation 2", key="dataset_manipulation_2" ,use_container_width=True):
+                st.session_state.page = "dataset_manipulation_2"
+            if st.button("Dataset Manipulation 3", key="dataset_manipulation_3" ,use_container_width=True):
+                st.session_state.page = "dataset_manipulation_3"
+            if st.button("Supervised Analysis", key="supervised_analysis" ,use_container_width=True):
+                st.session_state.page = "supervised_analysis"
+            if st.button("Unsupervised Analysis", key="unsupervised_analysis" ,use_container_width=True):
+                st.session_state.page = "unsupervised_analysis"
+        except:
+            st.warning('relod the page with F5 or CTRL + R')
+    
 # ------------------------------------------- Main app logic  ----------------------------------------------
 
 # Main app logic
 if "page" not in st.session_state:
-    st.session_state.page = "welcome"
-
-if st.session_state.page == "welcome":
     welcome_page()
 elif st.session_state.page == "general_overview":
     general_overview()
