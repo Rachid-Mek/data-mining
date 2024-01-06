@@ -100,7 +100,7 @@ def toggle_other_buttons_3(button_name):
       
 # ---------------------------------------------------------------------------------------------------------
 def general_overview():
-    return_welcome =  st.button("Return home" ,use_container_width=True)
+    return_welcome =  st.sidebar.button("Return home" ,use_container_width=True)
 
     st.title("General Overview")
     # Main button to return to the welcome page
@@ -115,7 +115,7 @@ def general_overview():
 
     # Display dataset
     st.subheader(f"Selected Dataset : {dataset_choice}")
-    st.write(dataset)
+    st.table(dataset.head(10))
 
     if dataset_choice == "Dataset 1":
         if "Dataset 1" not in st.session_state:
@@ -135,30 +135,37 @@ def general_overview():
         description_choice = st.sidebar.selectbox("Select description type", ["Data description", "Description table", "Description measures"])
         if description_choice == "Data description":
             st.subheader("Dataset Description")
-            st.write(describe_data(dataset))
+            st.table(describe_data(dataset))
         elif description_choice == "Description table":
             st.subheader("Dataset Description")
-            st.write(dc.Description_table(dataset))
+            st.table(dc.Description_table(dataset))
         elif description_choice == "Description measures":
             st.subheader("Dataset Description")
-            st.write(dc.Calculate_Measure(dataset))
+            st.table(dc.Calculate_Measure(dataset))
 
     elif task_option == "Plot Boxplot":
         st.subheader("Boxplot")
-        column_for_boxplot = st.selectbox("Select Column for Boxplot", dataset.columns)
+        columns = dataset.columns
+        # exclude non-numeric columns
+        numeric_columns = dataset._get_numeric_data().columns
+        column_for_boxplot = st.selectbox("Select Column for Boxplot", numeric_columns )
         plot_boxplot(dataset, column_for_boxplot)
         st.pyplot()
 
     elif task_option == "Plot Scatterplot":
         st.subheader("Scatter Plot")
-        x_column = st.selectbox("Select X-axis Column", dataset.columns)
-        y_column = st.selectbox("Select Y-axis Column", dataset.columns)
+        numeric_columns = dataset._get_numeric_data().columns
+
+        x_column = st.selectbox("Select X-axis Column", numeric_columns)
+        y_column = st.selectbox("Select Y-axis Column", numeric_columns)
         plot_scatterplot(dataset, x_column, y_column)
         st.pyplot()
 
     elif task_option == "Plot Histogram":
         st.subheader("Histogram")
-        column_for_histogram = st.selectbox("Select Column for Histogram", dataset.columns)
+        numeric_columns = dataset._get_numeric_data().columns
+
+        column_for_histogram = st.selectbox("Select Column for Histogram", numeric_columns)
         plot_histogram(dataset, column_for_histogram)
         st.pyplot()
  
@@ -170,7 +177,7 @@ def welcome_page():
     st.subheader("Select your desired Task ")
     
     # Buttons on the welcome page with unique keys
-    if st.button("General Overview", key="general_overview2" ,use_container_width=True):
+    if st.button("General Overview",use_container_width=True):
         st.session_state.page = "general_overview"
     if st.button("Dataset Manipulation 1", key="dataset_manipulation_1" ,use_container_width=True):
         st.session_state.page = "dataset_manipulation_1"

@@ -104,49 +104,20 @@ class DBSCAN_:
         return np.mean([self.metric(x, p) for p in points])
 
     # ------------------------------------------------------------------------------------------------------------------------
-    def davies_bouldin_score(self, X):
-        cluster_centers = np.array([np.mean(X[self.labels == i], axis=0) for i in self.clusters()])
-
-        # Compute pairwise distances between cluster centers
-        cluster_distances = pairwise_distances(cluster_centers)
-
-        scores = []
-
-        for i in self.clusters():
-            cluster_points_i = X[self.labels == i]
-            cluster_center_i = cluster_points_i.mean(axis=0)
-
-            intra_cluster_distances = [np.linalg.norm(x - cluster_center_i) for x in cluster_points_i]
-            within_cluster_distance = np.mean(intra_cluster_distances)
-
-            # Calculate the similarity index for the current cluster
-            similarity_indices = []
-
-            for j in self.clusters():
-                if j != i:
-                    inter_cluster_distance = np.max(cluster_distances[i, j])
-                    similarity_indices.append((within_cluster_distance + np.mean([np.linalg.norm(x - cluster_centers[j]) for x in X[self.labels == j]])) / inter_cluster_distance)
-
-            # Append the average similarity index for the current cluster
-            scores.append(np.mean(similarity_indices))
-
-        # Return the average similarity index over all clusters
-        return np.mean(scores)
-
     
     def calinski_harabasz_score(self, X):
-        n_clusters = len(self.clusters())  # Exclude noise points
-        cluster_centers = [np.mean(X[self.labels == i], axis=0) for i in self.clusters()]
+        labels = self.labels
+        centroids = np.array([np.mean(X[labels == label], axis=0) for label in set(labels)])
+        n = len(X)
+        k = len(centroids)
 
-        overall_mean = np.mean(X, axis=0)
+        numerator = sum([len(X[labels == label]) * self.metric(centroids[label], np.mean(X, axis=0)) for label in set(labels)])
+        denominator = (k - 1) * sum([sum([self.metric(x, centroids[label]) ** 2 for x in X[labels == label]]) for label in set(labels)])
 
-        # Calculate the total scatter matrix (sigma_T)
-        sigma_T = np.sum([np.sum((X[i] - overall_mean) ** 2) for i in range(len(X))])
-
-        # Calculate the between-cluster scatter matrix (sigma_B)
-        sigma_B = np.sum([len(X[self.labels == i]) * np.sum((cluster_centers[i] - overall_mean) ** 2) for i in self.clusters()])
-
-        # Calculate the Calinski-Harabasz Index
-        calinski_harabasz_index = (sigma_B / sigma_T) * (len(X) - n_clusters) / (n_clusters - 1)
-
-        return calinski_harabasz_index
+        return numerator / denominator if denominator != 0 else 0.0
+    def davies_bouldin_score(self, X):
+        labels = self.labels
+        centroids = np.array([np.mean(X[labels == label], axis=0) for label in set(labels)])
+        n = len(X)
+        k = len(centroids)
+        return sum([max([(self.calculate_average_distance(centroids[i], X[labels == i]) + self.calculate_average_distance(centroids[j], X[labels == j])) / self.metric(centroids[i], centroids[j]) for j in range(k) if j != i]) for i in range(k)]) / k

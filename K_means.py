@@ -122,8 +122,10 @@ class K_MEANS:
         calinski_harabasz_index = between_cluster_variance / within_cluster_variance
 
         return calinski_harabasz_index
+
+
     # --------------------------------------------------------------------------------------------------------
-    def plot_clusters(self, X ,labels, demention=2):
+    def plot_clusters(self, X ,labels, demention=3):
         if demention == 2:
             pca = PCA(n_components=2)
             pca.fit(X)
@@ -137,22 +139,23 @@ class K_MEANS:
             plt.ylabel('Second Principal Component')
             return plt
         elif demention == 3:
-            pca_k3 = PCA(n_components=3)
-            pca_k3.fit(X)
-            X_pca_k3 = pca_k3.transform(X)
+            pca = PCA(n_components=3)
+            X_pca = pca.fit_transform(X)
 
-            # Plot 3D clusters for k=3
+            centroids_pca = pca.transform(self.centroids)
+
+            # Plot 3D clusters
             plt.figure(figsize=(12, 6))
 
-            # 3D plot
+            # 3D scatter plot for data points
             ax = plt.subplot(1, 2, 2, projection='3d')
-            ax.scatter(X_pca_k3[:, 0], X_pca_k3[:, 1], X_pca_k3[:, 2], c=labels, cmap='viridis')
-            pca = PCA(n_components=3)
-            centroids_pca = pca.fit_transform(self.centroids)
+            ax.scatter(X_pca[:, 0], X_pca[:, 1], X_pca[:, 2], c=labels, cmap='viridis')
 
-            ax.scatter(centroids_pca[:, 0], centroids_pca[:, 1], centroids_pca[:, 2], marker='X', s=200, c='red', label='Centroids')
+            # Scatter plot for centroids
+            ax.scatter(centroids_pca[:, 0], centroids_pca[:, 1], centroids_pca[:, 2],
+                    marker='X', s=200, c='red', label='Centroids')
+
             ax.set_xlabel('First Principal Component')
             ax.set_ylabel('Second Principal Component')
             ax.set_zlabel('Third Principal Component')
-            ax.set_title('Clusters for k=3')
-            return plt
+            ax.set_title('Clusters')

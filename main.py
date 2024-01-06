@@ -188,7 +188,7 @@ def execute_Rf(n_trees, min_samples_split, max_depth, n_features=None):
     return fig, conf_mat, df_metrics , random_forest
      
 # -----------------------------------------Kmeans-----------------------------------------# 
-def run_kmeans(k ,dataset):
+def run_kmeans(k ,dataset ,demention):
     # dataset,_ = Preprocessing(0.7 , Norm=1)
     X = dataset.values
     kmeans = K_MEANS(k=k ,max_iter=100, metric=euclidean_distance)
@@ -199,7 +199,7 @@ def run_kmeans(k ,dataset):
     calinski_harabasz_score = kmeans.calinski_harabasz_score(X)
     # create a dataframe to display the metrics
     df_metrics = pd.DataFrame({'Silhouette Score': silhouette_score, 'Davies Bouldin Score': davies_bouldin_score, 'Calinski Harabasz Score': calinski_harabasz_score}, index=[0])
-    plot_clusters = kmeans.plot_clusters(X,labels)
+    plot_clusters = kmeans.plot_clusters(X,labels ,demention)
     return kmeans, df_metrics , plot_clusters
 
 # -----------------------------------------DBSCAN-----------------------------------------#
@@ -214,10 +214,12 @@ def run_dbscan(eps, min_samples , dataset):
         return 0, 0, 0
     else:
         silhouette_score = dbscan.silhouette_score(X)
-        davies_bouldin_score = 0
+ 
+        davies_bouldin_score = dbscan.davies_bouldin_score(X)
         calinski_harabasz_score = dbscan.calinski_harabasz_score(X)
 
-        df_metrics = pd.DataFrame({'Silhouette Score': silhouette_score, 'Davies Bouldin Score': davies_bouldin_score, 'Calinski Harabasz Score': calinski_harabasz_score}, index=[0])
+        df_metrics = pd.DataFrame({'Silhouette Score': silhouette_score, 'Davies Bouldin Score': davies_bouldin_score,
+                                    'Calinski Harabasz Score': calinski_harabasz_score}, index=[0])
         plot_clusters = dbscan.plot_clusters(X,labels ,demention=2)
         return dbscan, df_metrics , plot_clusters
 

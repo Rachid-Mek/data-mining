@@ -266,7 +266,7 @@ def dataset_manipulation_dataset3():
     if Description or st.session_state["Description_3"] == 1  :
        
         st.subheader("Dataset overwiew")
-        st.write(dataset )
+        st.table(dataset.head(10) )
         st.subheader("Data description  ")
         st.table(d3.describe_data(dataset))
     elif Discretisation  or st.session_state["Discretisation_3"] == 1 :

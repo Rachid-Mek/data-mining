@@ -185,10 +185,14 @@ def unsupervised_clustering():
         normalization = 0 if normalization == "No normalization" else 1 if normalization == "Min-Max normalization" else 2
         dataset = st.session_state["dataset_0"] if normalization == 0 else st.session_state["dataset_1"] if normalization == 1 else st.session_state["dataset_2"]
         k = st.slider("Select the number of k", 2, 30, 1) # add input text to get the number of k to execute the knn algorithm
+        dimention =st.selectbox("Select the dimention for visualisation :",["2D","3D"])
+        if dimention:
+            dimention = 2 if dimention == "2D" else 3
         launch_kmeans = st.button("Launch",use_container_width=True)
+        
         if launch_kmeans:
-            # execute the knn algorithm
-            kmeans ,metrics, chart = run_kmeans(k , dataset)
+       
+            kmeans ,metrics, chart = run_kmeans(k , dataset , dimention)
             st.success("Metrics")
             st.table(metrics)
             st.pyplot(chart, use_container_width=True)
@@ -210,6 +214,6 @@ def unsupervised_clustering():
             if dbscan == 0 and metrics==0 and chart==0:
                     st.error("The algorithm could not find any clusters")
             else:
-                st.success("L'algorithme a trouvé des clusters , et voici les métriques :")
+                st.success("L'algorithme a trouvé des clusters , et voici les métriques d'evaluation :")
                 st.table(metrics)
                 st.pyplot(chart, use_container_width=True)
