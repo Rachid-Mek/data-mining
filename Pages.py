@@ -118,7 +118,7 @@ def dataset_manipulation_dataset1():
 
 
     st.write("-----------------------------------------------------------")
-    return_welcome1 = st.sidebar.button("Return home", use_container_width=True)
+    return_welcome1 = st.sidebar.button("Return home",key="returnhome1" ,use_container_width=True)
     if return_welcome1:
         st.session_state.page = "welcome"
 
@@ -147,7 +147,7 @@ def dataset_manipulation_dataset2():
     Visualisation = st.sidebar.button("Data Visualisation", key="Visualisation2", use_container_width=True ,on_click=ui.toggle_other_buttons_2 ,args=["Visualisation_2"])   
  
     
-    return_welcome3 =  st.sidebar.button("Return home" ,use_container_width=True)
+    return_welcome3 =  st.sidebar.button("Return home" ,key="returnhome2", use_container_width=True)
 
     if return_welcome3:
         st.session_state.page = "welcome"
@@ -257,7 +257,7 @@ def dataset_manipulation_dataset3():
     Apriori = st.sidebar.button("Apriori", key="Apriori", use_container_width=True , on_click=ui.toggle_other_buttons_3 ,args=["Apriori_3"])
     Regles_associations = st.sidebar.button("Règles d'associations", key="Regles_associations", use_container_width=True , on_click=ui.toggle_other_buttons_3 ,args=["Regles_associations_3"])
     Predictions = st.sidebar.button("Predictions", key="Predictions", use_container_width=True , on_click=ui.toggle_other_buttons_3 ,args=["Predictions_3"])
-    return_welcome3 =  st.sidebar.button("Return home" ,use_container_width=True )
+    return_welcome3 =  st.sidebar.button("Return home" ,key="returnhome3", use_container_width=True )
 
     if return_welcome3:
         # Main button to return to the welcome page

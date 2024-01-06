@@ -120,7 +120,7 @@ def toggle_other_buttons_3(button_name):
       
 # ---------------------------------------------------------------------------------------------------------
 def general_overview():
-    return_welcome =  st.sidebar.button("Return home" ,use_container_width=True)
+    return_welcome =  st.sidebar.button("Return home" ,key="GeneralReturnHome", use_container_width=True)
 
     st.title("General Overview")
     # Main button to return to the welcome page
@@ -165,25 +165,34 @@ def general_overview():
 
     elif task_option == "Plot Boxplot":
         st.subheader("Boxplot")
-        columns = dataset.columns
-        # exclude non-numeric columns
-        numeric_columns = dataset._get_numeric_data().columns
+        if dataset_choice == "Dataset 3":
+            numeric_columns =["Temperature" ,"Humidity" ,"Rainfall"]
+        else :
+            numeric_columns =dataset.columns
+
         column_for_boxplot = st.selectbox("Select Column for Boxplot", numeric_columns )
         plot_boxplot(dataset, column_for_boxplot)
         st.pyplot()
 
     elif task_option == "Plot Scatterplot":
-        st.subheader("Scatter Plot")
-        numeric_columns = dataset._get_numeric_data().columns
+        if dataset_choice != "Dataset 3":
+            st.subheader("Scatter Plot")
+        
+            numeric_columns =dataset.columns
 
-        x_column = st.selectbox("Select X-axis Column", numeric_columns)
-        y_column = st.selectbox("Select Y-axis Column", numeric_columns)
-        plot_scatterplot(dataset, x_column, y_column)
-        st.pyplot()
+
+            x_column = st.selectbox("Select X-axis Column", numeric_columns)
+            y_column = st.selectbox("Select Y-axis Column", numeric_columns)
+            plot_scatterplot(dataset, x_column, y_column)
+            st.pyplot()
 
     elif task_option == "Plot Histogram":
         st.subheader("Histogram")
-        numeric_columns = dataset._get_numeric_data().columns
+        if dataset_choice == "Dataset 3":
+            numeric_columns =["Temperature" ,"Humidity" ,"Rainfall"]
+        else :
+            numeric_columns =dataset.columns
+
 
         column_for_histogram = st.selectbox("Select Column for Histogram", numeric_columns)
         plot_histogram(dataset, column_for_histogram)
@@ -199,7 +208,7 @@ def welcome_page():
     set_png_as_page_bg('background.jpg')
     
     # Buttons on the welcome page with unique keys
-    if st.button("General Overview",use_container_width=True):
+    if st.button("General Overview",key="WelcomeGeneral" , use_container_width=True):
         st.session_state.page = "general_overview"
     if st.button("Dataset Manipulation 1", key="dataset_manipulation_1" ,use_container_width=True):
         st.session_state.page = "dataset_manipulation_1"
