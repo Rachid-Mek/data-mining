@@ -3,6 +3,26 @@ import Dataset_1_logic as dc
 from Pages import *
 import pandas as pd
 from clustering_pages import *
+import base64
+
+
+# @st.cache_data(show_spinner=False)
+def get_base64(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+def set_png_as_page_bg(png_file):
+    bin_str = get_base64(png_file)
+    page_bg_img = '''
+    <style>
+    .stApp {
+    background-image: url("data:image/png;base64,%s");
+    background-size: cover;
+    }
+    </style>
+    ''' % bin_str
+    st.markdown(page_bg_img, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------------------------------------
 st.set_option('deprecation.showPyplotGlobalUse', False)
@@ -175,6 +195,8 @@ def general_overview():
 def welcome_page():
     st.title("Welcome to Dataset Manipulation Interface")
     st.subheader("Select your desired Task ")
+
+    set_png_as_page_bg('background.jpg')
     
     # Buttons on the welcome page with unique keys
     if st.button("General Overview",use_container_width=True):
