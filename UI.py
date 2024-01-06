@@ -128,7 +128,7 @@ def general_overview():
     elif dataset_choice == "Dataset 3":
         if "Dataset 3" not in st.session_state:
             st.session_state['Dataset 3'] = 1
-        task_option = st.sidebar.selectbox("Select Task", ["Data description","Plot Scatterplot", "Plot Histogram"])
+        task_option = st.sidebar.selectbox("Select Task", ["Data description", "Plot Histogram"])
 
     if task_option == "Data description":
 
